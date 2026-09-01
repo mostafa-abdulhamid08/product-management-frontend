@@ -1,0 +1,41 @@
+<div class="overflow-hidden rounded-md border border-border bg-surface">
+  @if (loading()) {
+    <app-table-skeleton [rows]="skeletonRows()" [columns]="columns().length" />
+  } @else if (failed()) {
+    <app-empty-state [heading]="errorHeading()" [message]="errorMessage()">
+      <button type="button" class="btn-primary" (click)="retry.emit()">Try again</button>
+    </app-empty-state>
+  } @else if (isEmpty() && filtered()) {
+    <app-empty-state [heading]="filteredHeading()" [message]="filteredMessage()">
+      <button type="button" class="btn-quiet" (click)="clearFilters.emit()">Clear filters</button>
+    </app-empty-state>
+  } @else if (isEmpty()) {
+    <app-empty-state [heading]="emptyHeading()" [message]="emptyMessage()">
+      <ng-content select="[emptyAction]" />
+    </app-empty-state>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-table">
+        <thead>
+          <tr class="border-b border-border text-meta text-text-secondary">
+            @for (column of columns(); track column.label) {
+              <th [class]="headerClass(column)">{{ column.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <ng-container
+              [ngTemplateOutlet]="rowTemplate()"
+              [ngTemplateOutletContext]="{ $implicit: row }"
+            />
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as pageMeta) {
+      <app-pagination [meta]="pageMeta" (pageChange)="pageChange.emit($event)" />
+    }
+  }
+</div>

@@ -8,11 +8,12 @@ import { HasPermissionDirective } from '../../../../core/directives/has-permissi
 import { PaginationMeta } from '../../../../core/models/api-response.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import {
+  DataTableColumn,
+  DataTableComponent,
+} from '../../../../shared/components/data-table/data-table.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
 import { PricePipe } from '../../../../shared/pipes/price.pipe';
 import {
   CategoryOption,
@@ -31,10 +32,8 @@ import { ProductService } from '../../services/product.service';
     RouterLink,
     HasPermissionDirective,
     PageHeaderComponent,
-    PaginationComponent,
+    DataTableComponent,
     StatusBadgeComponent,
-    TableSkeletonComponent,
-    EmptyStateComponent,
     ConfirmDialogComponent,
     PricePipe,
   ],
@@ -57,7 +56,16 @@ export class ProductListComponent implements OnInit {
   readonly deleting = signal(false);
 
   readonly filtered = computed(() => hasActiveFilters(this.filters()));
-  readonly isEmpty = computed(() => !this.loading() && !this.failed() && this.rows().length === 0);
+
+  readonly columns: DataTableColumn[] = [
+    { label: 'Image', width: 'w-16' },
+    { label: 'Product' },
+    { label: 'Category' },
+    { label: 'Price', align: 'end' },
+    { label: 'Stock', align: 'end' },
+    { label: 'Status' },
+    { label: 'Actions', align: 'end', width: 'w-28' },
+  ];
 
   constructor() {
     // Debouncing keystrokes is a stream. The result of it still lands in a signal.

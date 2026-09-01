@@ -92,6 +92,7 @@ src/
 │   │
 │   ├── shared/                       reusable, no business logic
 │   │   ├── components/
+│   │   │   ├── data-table/
 │   │   │   ├── page-header/
 │   │   │   ├── pagination/
 │   │   │   ├── status-badge/
@@ -259,7 +260,7 @@ Both are declared at `path: ''`, separated only by their `canMatch` guard:
 
 { path: '', canMatch: [catalogGuard], loadComponent: CatalogLayout, children: [
     ...catalogChildren,
-    { path: '**', loadComponent: Forbidden },   // last child, always
+    { path: '**', canMatch: [catalogFallbackGuard], loadComponent: Forbidden },  // last, always
 ]},
 
 { path: '**', loadComponent: NotFound },
@@ -305,6 +306,7 @@ candidate. A `UrlTree` redirects. Getting these backwards is how a user ends up 
 | `catalogGuard` | authenticated | `UrlTree` → `/login` | last shell, so it must redirect rather than fall through |
 | `permissionGuard` | route `data.permission` held | `UrlTree` → `/403` | shows the 403 screen inside the current shell |
 | `guestGuard` | not authenticated | `UrlTree` → `/dashboard` | keeps a signed-in user off the login page |
+| `catalogFallbackGuard` | user is *not* an admin | `false` | keeps the catalog catch-all from swallowing admins — see below |
 
 **`adminGuard` returning a bare `false` is deliberate. Do not change it to a
 redirect.** Every other guard here is terminal — nothing useful sits behind it, so
@@ -391,11 +393,20 @@ that shell declares every route in the app, so an unmatched path is not a page
 being withheld, it is a page that does not exist. Whether 404 or 403 is the truthful
 answer depends on whether the shell is missing routes, and only the catalog one is.
 
+**Leaving the catch-all off the admin layout is not enough on its own**, and this is
+easy to get wrong. An admin is authenticated, so they match `catalogGuard` too: an
+unmatched admin URL falls past the admin layout, lands in the catalog layout, and is
+caught by *its* `**`. The result is a super admin being told "not yours" about a page
+that is nobody's, in a shell missing half their nav. So the catch-all carries
+`catalogFallbackGuard`, which passes only for a non-admin. With it, an admin's
+unmatched path falls all the way through to the outer `**` and reports 404, which is
+the truth.
+
 | Situation | Result |
 |---|---|
 | Route in your shell, permission missing | `permissionGuard` → **403** |
 | Catalog user, route only in the admin shell | catalog catch-all child → **403** |
-| Admin user, route that exists nowhere | outer `**` → **404** |
+| Admin user, route that exists nowhere | `catalogFallbackGuard` declines, outer `**` → **404** |
 | Not signed in | `catalogGuard` → `/login` |
 
 Two rendering contexts for one component, and it has to handle both. The top-level

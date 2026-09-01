@@ -8,10 +8,11 @@ import { HasPermissionDirective } from '../../../../core/directives/has-permissi
 import { PaginationMeta } from '../../../../core/models/api-response.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import {
+  DataTableColumn,
+  DataTableComponent,
+} from '../../../../shared/components/data-table/data-table.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
 import {
   Category,
   CategoryFilters,
@@ -26,9 +27,7 @@ import { CategoryService } from '../../services/category.service';
     RouterLink,
     HasPermissionDirective,
     PageHeaderComponent,
-    PaginationComponent,
-    TableSkeletonComponent,
-    EmptyStateComponent,
+    DataTableComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './category-list.component.html',
@@ -49,7 +48,13 @@ export class CategoryListComponent implements OnInit {
   readonly deleting = signal(false);
 
   readonly filtered = computed(() => hasActiveCategoryFilters(this.filters()));
-  readonly isEmpty = computed(() => !this.loading() && !this.failed() && this.rows().length === 0);
+
+  readonly columns: DataTableColumn[] = [
+    { label: 'Category' },
+    { label: 'Description' },
+    { label: 'Products', align: 'end', width: 'w-28' },
+    { label: 'Actions', align: 'end', width: 'w-24' },
+  ];
 
   constructor() {
     this.searchInput

@@ -6,10 +6,11 @@ import { HasPermissionDirective } from '../../../../core/directives/has-permissi
 import { PaginationMeta } from '../../../../core/models/api-response.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import {
+  DataTableColumn,
+  DataTableComponent,
+} from '../../../../shared/components/data-table/data-table.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
 import {
   matrixActions,
   PermissionMatrix,
@@ -25,9 +26,7 @@ import { RoleService } from '../../services/role.service';
     RouterLink,
     HasPermissionDirective,
     PageHeaderComponent,
-    PaginationComponent,
-    TableSkeletonComponent,
-    EmptyStateComponent,
+    DataTableComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './role-list.component.html',
@@ -50,7 +49,18 @@ export class RoleListComponent implements OnInit {
   readonly resources = computed(() => Object.keys(this.matrix()));
   readonly actions = computed(() => matrixActions(this.matrix()));
   readonly resourceCount = computed(() => this.resources().length);
-  readonly isEmpty = computed(() => !this.loading() && !this.failed() && this.rows().length === 0);
+
+  /** Built from the matrix, so a new resource or action needs no change here. */
+  readonly columns = computed<DataTableColumn[]>(() => [
+    { label: 'Role' },
+    ...this.actions().map((action) => ({
+      label: action.charAt(0).toUpperCase() + action.slice(1),
+      align: 'center' as const,
+      width: 'w-24',
+    })),
+    { label: 'Users', align: 'end', width: 'w-20' },
+    { label: 'Actions', align: 'end', width: 'w-24' },
+  ]);
 
   ngOnInit(): void {
     this.load();

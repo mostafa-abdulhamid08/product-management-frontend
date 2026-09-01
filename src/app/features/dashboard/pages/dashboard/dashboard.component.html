@@ -1,0 +1,99 @@
+<app-page-header title="Dashboard" subtitle="Where the catalog stands today." />
+
+@if (loading()) {
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
+    <span class="sr-only">Loading…</span>
+    @for (card of [1, 2, 3, 4]; track card) {
+      <div class="rounded-md border border-border bg-surface p-5">
+        <div class="h-3 w-24 animate-pulse rounded-sm bg-border"></div>
+        <div class="mt-3 h-7 w-16 animate-pulse rounded-sm bg-border"></div>
+      </div>
+    }
+  </div>
+} @else if (failed()) {
+  <div class="rounded-md border border-border bg-surface">
+    <app-empty-state
+      heading="Could not load the dashboard"
+      message="The request did not come back. It may be a connection problem."
+    >
+      <button type="button" class="btn-primary" (click)="load()">Try again</button>
+    </app-empty-state>
+  </div>
+} @else {
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    @for (card of cards(); track card.key) {
+      <div class="rounded-md border border-border bg-surface p-5">
+        <p class="m-0 text-meta text-text-secondary">{{ card.label }}</p>
+        <p class="mt-2 mb-0 text-page-title font-semibold text-text tabular-nums">
+          {{ card.value }}
+        </p>
+      </div>
+    }
+  </div>
+
+  @if (cards().length === 0) {
+    <div class="rounded-md border border-border bg-surface">
+      <app-empty-state
+        heading="Nothing to summarise yet"
+        message="Counts appear here for the resources you can view."
+      />
+    </div>
+  }
+
+  <section *hasPermission="'products.view'" class="mt-6">
+    <div class="mb-3 flex items-baseline justify-between gap-4">
+      <h2 class="m-0 text-section font-semibold text-text">Recent products</h2>
+      <a class="text-body text-primary underline-offset-2 hover:underline" routerLink="/products">
+        View all
+      </a>
+    </div>
+
+    <div class="overflow-hidden rounded-md border border-border bg-surface">
+      @if (!hasRecent()) {
+        <app-empty-state
+          heading="No products yet"
+          message="The five most recent ones will appear here."
+        />
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-table">
+            <thead>
+              <tr class="border-b border-border text-meta text-text-secondary">
+                <th class="px-4 py-3 text-start font-medium">Product</th>
+                <th class="px-4 py-3 text-start font-medium">Category</th>
+                <th class="px-4 py-3 text-end font-medium">Price</th>
+                <th class="px-4 py-3 text-end font-medium">Stock</th>
+                <th class="w-28 px-4 py-3 text-start font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (product of recent(); track product.id) {
+                <tr class="border-b border-border last:border-b-0 hover:bg-bg">
+                  <td class="px-4 py-3">
+                    <a
+                      class="text-text underline-offset-2 hover:text-primary hover:underline"
+                      [routerLink]="['/products', product.id]"
+                    >
+                      {{ product.name }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-3 text-text-secondary">{{ product.category.name }}</td>
+                  <td class="px-4 py-3 text-end text-text tabular-nums">
+                    {{ product.price | price }}
+                  </td>
+                  <td class="px-4 py-3 text-end text-text tabular-nums">{{ product.stock }}</td>
+                  <td class="px-4 py-3">
+                    <app-status-badge
+                      [active]="product.is_active"
+                      [label]="product.status_label"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+}

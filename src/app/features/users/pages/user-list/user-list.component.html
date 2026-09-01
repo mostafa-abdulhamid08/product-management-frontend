@@ -40,145 +40,122 @@
   }
 </div>
 
-<div class="overflow-hidden rounded-md border border-border bg-surface">
-  @if (loading()) {
-    <app-table-skeleton [rows]="6" [columns]="5" />
-  } @else if (failed()) {
-    <app-empty-state
-      heading="Could not load users"
-      message="The request did not come back. It may be a connection problem."
-    >
-      <button type="button" class="btn-primary" (click)="load()">Try again</button>
-    </app-empty-state>
-  } @else if (isEmpty() && filtered()) {
-    <app-empty-state
-      heading="No users match these filters"
-      message="Try a different search term, or clear the filters to see everyone."
-    >
-      <button type="button" class="btn-quiet" (click)="clearFilters()">Clear filters</button>
-    </app-empty-state>
-  } @else if (isEmpty()) {
-    <app-empty-state heading="No users yet" message="Add the first one to get started.">
-      <a *hasPermission="'users.create'" class="btn-primary" routerLink="/users/create">Add user</a>
-    </app-empty-state>
-  } @else {
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse text-table">
-        <thead>
-          <tr class="border-b border-border text-meta text-text-secondary">
-            <th class="px-4 py-3 text-start font-medium">Name</th>
-            <th class="px-4 py-3 text-start font-medium">Email</th>
-            <th class="px-4 py-3 text-start font-medium">Role</th>
-            <th class="w-28 px-4 py-3 text-start font-medium">Status</th>
-            <th class="w-36 px-4 py-3 text-end font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of rows(); track user.id) {
-            <tr class="border-b border-border last:border-b-0 hover:bg-bg">
-              <td class="px-4 py-3 text-text">{{ user.name }}</td>
-              <td class="px-4 py-3 text-text-secondary">{{ user.email }}</td>
-              <td class="px-4 py-3 text-text-secondary">{{ user.role_display_name }}</td>
-              <td class="px-4 py-3">
-                <app-status-badge [active]="user.is_active" [label]="user.status_label" />
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    *hasPermission="'users.update'"
-                    type="button"
-                    role="switch"
-                    class="toggle"
-                    [class.is-on]="user.is_active"
-                    [attr.aria-checked]="user.is_active"
-                    [attr.aria-label]="
-                      (user.is_active ? 'Deactivate ' : 'Activate ') + user.name
-                    "
-                    [disabled]="togglingId() === user.id || isSelf(user)"
-                    [title]="isSelf(user) ? 'You cannot deactivate your own account.' : ''"
-                    (click)="toggleStatus(user)"
-                  >
-                    <span class="toggle-knob"></span>
-                  </button>
+<app-data-table
+  [rows]="rows()"
+  [columns]="columns"
+  [meta]="meta()"
+  [loading]="loading()"
+  [failed]="failed()"
+  [filtered]="filtered()"
+  [skeletonRows]="6"
+  errorHeading="Could not load users"
+  emptyHeading="No users yet"
+  emptyMessage="Add the first one to get started."
+  filteredHeading="No users match these filters"
+  filteredMessage="Try a different search term, or clear the filters to see everyone."
+  (retry)="load()"
+  (clearFilters)="clearFilters()"
+  (pageChange)="onPage($event)"
+>
+  <a *hasPermission="'users.create'" emptyAction class="btn-primary" routerLink="/users/create">
+    Add user
+  </a>
 
-                  <a
-                    class="icon-btn"
-                    [routerLink]="['/users', user.id]"
-                    [attr.aria-label]="'View ' + user.name"
-                  >
-                    <svg
-                      class="size-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </a>
+  <ng-template #row let-user>
+    <tr class="border-b border-border last:border-b-0 hover:bg-bg">
+      <td class="px-4 py-3 text-text">{{ user.name }}</td>
+      <td class="px-4 py-3 text-text-secondary">{{ user.email }}</td>
+      <td class="px-4 py-3 text-text-secondary">{{ user.role_display_name }}</td>
+      <td class="px-4 py-3">
+        <app-status-badge [active]="user.is_active" [label]="user.status_label" />
+      </td>
+      <td class="px-4 py-3">
+        <div class="flex items-center justify-end gap-1">
+          <button
+            *hasPermission="'users.update'"
+            type="button"
+            role="switch"
+            class="toggle"
+            [class.is-on]="user.is_active"
+            [attr.aria-checked]="user.is_active"
+            [attr.aria-label]="(user.is_active ? 'Deactivate ' : 'Activate ') + user.name"
+            [disabled]="togglingId() === user.id || isSelf(user)"
+            [title]="isSelf(user) ? 'You cannot deactivate your own account.' : ''"
+            (click)="toggleStatus(user)"
+          >
+            <span class="toggle-knob"></span>
+          </button>
 
-                  <a
-                    *hasPermission="'users.update'"
-                    class="icon-btn"
-                    [routerLink]="['/users', user.id, 'edit']"
-                    [attr.aria-label]="'Edit ' + user.name"
-                  >
-                    <svg
-                      class="size-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                  </a>
+          <a
+            class="icon-btn"
+            [routerLink]="['/users', user.id]"
+            [attr.aria-label]="'View ' + user.name"
+          >
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </a>
 
-                  <button
-                    *hasPermission="'users.delete'"
-                    type="button"
-                    class="icon-btn icon-btn-danger"
-                    [attr.aria-label]="'Delete ' + user.name"
-                    [disabled]="isSelf(user)"
-                    [title]="isSelf(user) ? 'You cannot delete your own account.' : ''"
-                    (click)="askDelete(user)"
-                  >
-                    <svg
-                      class="size-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4h8v2" />
-                      <path d="M19 6l-1 14H6L5 6" />
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          <a
+            *hasPermission="'users.update'"
+            class="icon-btn"
+            [routerLink]="['/users', user.id, 'edit']"
+            [attr.aria-label]="'Edit ' + user.name"
+          >
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </a>
 
-    @if (meta(); as pageMeta) {
-      <app-pagination [meta]="pageMeta" (pageChange)="onPage($event)" />
-    }
-  }
-</div>
+          <button
+            *hasPermission="'users.delete'"
+            type="button"
+            class="icon-btn icon-btn-danger"
+            [attr.aria-label]="'Delete ' + user.name"
+            [disabled]="isSelf(user)"
+            [title]="isSelf(user) ? 'You cannot delete your own account.' : ''"
+            (click)="askDelete(user)"
+          >
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2" />
+              <path d="M19 6l-1 14H6L5 6" />
+            </svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</app-data-table>
 
 @if (pendingDelete(); as user) {
   <app-confirm-dialog

@@ -158,42 +158,42 @@ work. Build it properly and copy its shape.
   complete and its Postman collection documents every response shape.
 - After completing any step, update the `## Current status
 
-**Steps 1-5 are done.** Angular 19.2 standalone, Tailwind 4.3, tokens in a `@theme`
-block in `src/styles.css` with the shared control classes (`.btn-primary`,
-`.btn-quiet`, `.btn-danger-text`, `.field`, `.icon-btn`, `.page-btn`, `.toggle`).
+**Steps 1-6 are done. Every screen in the build order exists.** Angular 19.2
+standalone, Tailwind 4.3, tokens in a `@theme` block in `src/styles.css` with the
+shared control classes.
 
-1-3: the two layouts and `canMatch` skeleton; login, `AuthService` HTTP, the three
-interceptors and `restoreSession` in `provideAppInitializer`; the `hasPermission`
-directive and the permission-filtered sidebar, plus the fallthrough warning in
-`catalogGuard`.
+1-3: the two layouts and the `canMatch` skeleton; login, `AuthService` HTTP, the
+three interceptors, `restoreSession` in `provideAppInitializer`; the `hasPermission`
+directive and the permission-filtered sidebar.
 
-4: Products end to end — list with search, category and status filters, pagination,
-result count and four states; details; a shared create/edit form with image upload;
-delete behind a confirm dialog.
+4-5: Products end to end; Categories, Users and Roles following its shape, with the
+API's business rules surfaced in its own words (category still holding products,
+role still assigned, self-deactivation, the protected `super-admin`).
 
-5: **Categories** (list with search and pagination, form, delete that surfaces the
-API's refusal when the category still holds products). **Users** (list with search,
-role and status filters; row actions view, edit, status toggle and delete, with the
-self rows disabled client-side; details; a form whose password is optional on edit).
-**Roles** (list with expandable per-role matrix over all four resources, per-action
-counts out of four, `users_count`, `super-admin` listed with its actions disabled;
-a form with row and column select-all and a live selected counter).
+6: **`data-table` extracted** and all four lists refactored onto it — it owns the
+card, the header row, the four states, and the pagination with its result count;
+features keep their filters, cell markup and row actions, passed in as a
+`<ng-template #row>`. **Dashboard** builds its cards from the keys the API returns,
+so a viewer sees two and a super admin four, with recent products priced through the
+price pipe. **Real 403 and 404 pages** in `features/errors/`, and
+`shared/components/placeholder-page/` is **deleted** — nothing references it.
 
-Shared so far: `page-header`, `pagination`, `status-badge`, `confirm-dialog`,
-`empty-state`, `table-skeleton`, `toast-host`, and `pipes/price.pipe.ts` (EGP,
-`27,499.00 EGP`). Still no `data-table` — extract it now that three real tables
-exist, before Dashboard.
+One routing bug found and fixed while testing step 6: leaving the catch-all off the
+admin layout was not enough. An admin is authenticated, so they also match
+`catalogGuard`; an unmatched admin URL fell into the catalog shell's `**` and got a
+403 in the wrong shell. The catch-all now carries `catalogFallbackGuard`, which
+passes only for non-admins, so an admin's typo reaches the outer `**` as a truthful
+404. `ADMIN_PERMISSIONS` is declared once in `admin.guard.ts` and used by both.
 
-Verified against the API on localhost:8000 with the seeded accounts, at every step.
-For step 5 specifically: categories listed with real counts and the delete refusal
-shown in the API's own words; the user status toggle flipped and flipped back so the
-seed is unchanged, with the signed-in user's own toggle and delete inert; all five
-roles listed including `super-admin` with its actions disabled; the expanded matrix
-matching the API exactly; both select-alls; and `/roles/1/edit` refused with an
-explanation rather than a form the server would reject.
+Verified in the browser against localhost:8000 after the refactor: all four lists
+unchanged, the filtered-empty state still distinct, prices in EGP; the dashboard with
+four cards as admin and two as `viewer@example.com`; `/prodcuts` as admin giving 404
+bare; `/users` as viewer giving 403 inside the catalog shell with the sidebar intact.
 
-Temporary: `shared/components/placeholder-page/` still stands in for `403` and
-`dashboard`, and for the catalog catch-all.
+Not built: no i18n message files and no language switcher — `LocaleService` exists,
+defaults to `en`, and drives the `Accept-Language` header, but the UI's own strings
+are still English literals in templates. That is the last thing `README.md` describes
+which does not exist yet.
 
-Next: step 6 — Dashboard, 403 and 404 as real screens, which retires the
-placeholder. Extract `data-table` first.
+Next: step 7 — a pass over empty, loading and error states across every list, then
+the localisation work if you want it.

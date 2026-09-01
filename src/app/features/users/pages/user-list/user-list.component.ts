@@ -9,11 +9,12 @@ import { PaginationMeta } from '../../../../core/models/api-response.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import {
+  DataTableColumn,
+  DataTableComponent,
+} from '../../../../shared/components/data-table/data-table.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
 import {
   EMPTY_USER_FILTERS,
   hasActiveUserFilters,
@@ -30,10 +31,8 @@ import { UserService } from '../../services/user.service';
     RouterLink,
     HasPermissionDirective,
     PageHeaderComponent,
-    PaginationComponent,
+    DataTableComponent,
     StatusBadgeComponent,
-    TableSkeletonComponent,
-    EmptyStateComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './user-list.component.html',
@@ -57,7 +56,14 @@ export class UserListComponent implements OnInit {
   readonly togglingId = signal<number | null>(null);
 
   readonly filtered = computed(() => hasActiveUserFilters(this.filters()));
-  readonly isEmpty = computed(() => !this.loading() && !this.failed() && this.rows().length === 0);
+
+  readonly columns: DataTableColumn[] = [
+    { label: 'Name' },
+    { label: 'Email' },
+    { label: 'Role' },
+    { label: 'Status', width: 'w-28' },
+    { label: 'Actions', align: 'end', width: 'w-36' },
+  ];
 
   /** The backend refuses these too; hiding them first saves a pointless 422. */
   private readonly currentUserId = computed(() => this.auth.user()?.id ?? null);

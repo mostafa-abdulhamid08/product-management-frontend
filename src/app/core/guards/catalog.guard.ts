@@ -32,8 +32,8 @@ function warnOnAdminFallthrough(auth: AuthService, segments: UrlSegment[]): void
   const path = `/${segments.map((segment) => segment.path).join('/')}`;
 
   console.warn(
-    `[routes] admin route not found: ${path} — falling through to the catalog shell, ` +
-      `which will render 403. This is a missing child route in app.routes.ts, not a ` +
-      `missing permission.`,
+    `[routes] no admin child matched ${path}. If that path should exist, it is missing ` +
+      `from adminChildren in app.routes.ts — not a missing permission. If it is simply a ` +
+      `typo, the outer ** will render 404, which is correct.`,
   );
 }

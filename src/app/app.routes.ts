@@ -1,18 +1,22 @@
 import { Routes } from '@angular/router';
 
-import { adminGuard } from './core/guards/admin.guard';
+import { adminGuard, catalogFallbackGuard } from './core/guards/admin.guard';
 import { catalogGuard } from './core/guards/catalog.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 
-const placeholder = () =>
-  import('./shared/components/placeholder-page/placeholder-page.component').then(
-    (m) => m.PlaceholderPageComponent,
-  );
+const forbidden = () =>
+  import('./features/errors/forbidden/forbidden.component').then((m) => m.ForbiddenComponent);
 
 const catalogChildren: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-  { path: 'dashboard', loadComponent: placeholder, data: { title: 'Dashboard' } },
+  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('./features/dashboard/pages/dashboard/dashboard.component').then(
+        (m) => m.DashboardComponent,
+      ),
+  },
 
   {
     path: 'products',
@@ -157,7 +161,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
   },
-  { path: '403', loadComponent: placeholder, data: { title: 'Forbidden' } },
+  { path: '403', loadComponent: forbidden },
 
   {
     path: '',
@@ -176,9 +180,13 @@ export const routes: Routes = [
       ),
     children: [
       ...catalogChildren,
-      { path: '**', loadComponent: placeholder, data: { title: 'Forbidden' } },
+      { path: '**', canMatch: [catalogFallbackGuard], loadComponent: forbidden },
     ],
   },
 
-  { path: '**', loadComponent: placeholder, data: { title: 'Not found' } },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/errors/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];
