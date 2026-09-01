@@ -224,27 +224,32 @@ Both are declared at `path: ''`, separated only by their `canMatch` guard:
 
 ```ts
 { path: 'login', canMatch: [guestGuard], loadComponent: Login },
+{ path: '403',                           loadComponent: Forbidden },
 
 { path: '', canMatch: [adminGuard], loadComponent: AdminLayout, children: [
     ...adminChildren,
-    { path: '403', loadComponent: Forbidden },
-    { path: '**',  loadComponent: Forbidden },   // last child, always
 ]},
 
 { path: '', canMatch: [catalogGuard], loadComponent: CatalogLayout, children: [
     ...catalogChildren,
-    { path: '403', loadComponent: Forbidden },
-    { path: '**',  loadComponent: Forbidden },   // last child, always
+    { path: '**', loadComponent: Forbidden },   // last child, always
 ]},
 
 { path: '**', loadComponent: NotFound },
 ```
 
-**`login` is declared before the layouts, and that ordering is load-bearing.** An
-empty-path parent matches any URL as a prefix, so with a `**` child inside each
-layout the shells now match *everything*. Declared after them, `/login` would never
-be reached — the catalog layout would claim it and render 403 at it. Anything that
-must live outside a shell goes above the two `path: ''` entries.
+**`login` and `403` are declared before the layouts, and that ordering is
+load-bearing.** An empty-path parent matches any URL as a prefix, so the catalog
+shell — which carries a `**` child — matches *everything* for a signed-in user.
+Declared after it, `/login` would never be reached: the catalog layout would claim
+it and render 403 at it, leaving no way to sign in. Anything that must live outside
+a shell goes above the two `path: ''` entries.
+
+**Only the catalog layout gets the catch-all child.** The admin layout declares
+every route in the app, so a path it does not match genuinely does not exist —
+falling through to the outer `**` and reporting 404 is the honest answer there. Put
+a catch-all in the admin layout and a super admin who typos `/prodcuts` is told
+"not yours" about a page that is nobody's.
 
 **Why `canMatch` and not `canActivate`.** `canActivate` runs *after* a path has
 matched — the route is already chosen and its lazy chunk already fetched, and the
@@ -307,8 +312,8 @@ catalog shell, and `/products/create` is reachable for exactly one of them.
 
 ### 403, not 404, for a route that isn't yours
 
-Each layout ends with a catch-all child rendering the 403 page. It must be the
-**last** child in the array — a `**` sibling declared above a real route would
+The catalog layout ends with a catch-all child rendering the 403 page. It must be
+the **last** child in the array — a `**` sibling declared above a real route would
 swallow it.
 
 Without it, a viewer typing `/users` gets a 404: the admin layout does not match,
@@ -318,24 +323,25 @@ thing. "Broken link" is not the truth here — the page exists, it is simply not
 theirs — and it throws away the 403 screen the design has specifically for this
 case. The catch-all child means the catalog layout matches, and the 403 renders.
 
-So the boundary is the shell, and both sides of it end at a 403:
+The admin layout deliberately has no such child, because there the 404 *is* honest:
+that shell declares every route in the app, so an unmatched path is not a page
+being withheld, it is a page that does not exist. Whether 404 or 403 is the truthful
+answer depends on whether the shell is missing routes, and only the catalog one is.
 
 | Situation | Result |
 |---|---|
 | Route in your shell, permission missing | `permissionGuard` → **403** |
-| Route not in your shell at all | layout catch-all child → **403** |
-| No layout matched | outer `**` → **404** |
+| Catalog user, route only in the admin shell | catalog catch-all child → **403** |
+| Admin user, route that exists nowhere | outer `**` → **404** |
+| Not signed in | `catalogGuard` → `/login` |
 
-One consequence worth knowing before it surprises someone: the 403 now renders
-**inside** the shell, with the sidebar still present, because it is a child route.
-That is the better outcome — the user keeps their navigation and can leave — but it
-means the 403 component must work in both layouts and must not assume a full-page
-canvas.
-
-The outer `**` survives as the last-resort 404, though a signed-in user rarely
-reaches it: the shells match everything once they carry a catch-all child. It fires
-for a URL matched by no layout at all, which in practice means before the session
-resolves.
+Two rendering contexts for one component, and it has to handle both. The top-level
+`/403` renders bare, outside any shell, and is where `permissionGuard` redirects.
+The catalog catch-all renders the same component *inside* the catalog shell, with
+the sidebar still present — better for the user, who keeps their navigation and can
+leave. So the 403 component must not assume a full-page canvas. (Pointing the
+catch-all at `redirectTo: '/403'` instead would collapse this to one context, at
+the cost of the in-shell version.)
 
 Either way the backend still returns 403 to a direct API call. The screen a user
 lands on is UX; the route is not what protects anything.
@@ -377,15 +383,16 @@ Every guard below is `canMatch`. There is no `canActivate` anywhere in the table
 | `/roles` | admin | `permissionGuard` | `roles.view` |
 | `/roles/create` | admin | `permissionGuard` | `roles.create` |
 | `/roles/:id/edit` | admin | `permissionGuard` | `roles.update` |
-| `/403` | both | — | — |
-| `**` (child) | both | — | — (403, last child in each layout) |
+| `/403` | none | — | — |
+| `**` (child) | catalog | — | — (403, last child) |
 | `**` (outer) | none | — | — (404) |
 
 **Shell** is which layout declares the route as a child. The catalog children are a
 subset of the admin children, declared once and spread into both `children` arrays
 so the two shells cannot drift apart. The five admin-only rows exist under
-`AdminLayoutComponent` alone — for a catalog user those paths reach the catalog
-layout's catch-all child and render 403.
+`AdminLayoutComponent` alone — for a catalog user those paths fall to the catalog
+layout's catch-all child and render 403. For an admin user nothing is missing, so
+that layout has no catch-all and an unmatched path reaches the outer `**` as a 404.
 
 `/dashboard` sits in both and carries no permission: the endpoint shapes its own
 response to the caller, so every authenticated user has something to see there.
@@ -674,11 +681,12 @@ Every interactive element gets default, hover, active, focus-visible, and disabl
 | User form | name, email, password, role select |
 | Roles list | expandable rows showing the permission matrix |
 | Role form | name, description, permission matrix with row and column select-all |
-| 403 | a route you lack permission for, or one outside your shell — renders inside the shell, sidebar intact |
-| 404 | outer catch-all, for a URL no layout matched |
+| 403 | a route you lack permission for, or one only the admin shell has |
+| 404 | a path that exists in no shell |
 
-The 403 is a child of both layouts, so it renders with the sidebar; the 404 sits
-outside them and renders bare. Build the 403 to work in either shell.
+The 403 renders bare at `/403` and inside the catalog shell as its catch-all, so
+build it to work with and without a sidebar. The 404 sits outside both shells and
+always renders bare.
 
 The screenshots in `/docs` show the **super admin** view — the widest version of every screen, in the admin shell. Any other role sees a subset: possibly a different shell, and within it fewer nav links, fewer buttons, fewer row actions. Design against the super admin view, then verify each screen twice — as a `viewer` for the permission filtering, and once in the catalog shell for the layout itself.
 
