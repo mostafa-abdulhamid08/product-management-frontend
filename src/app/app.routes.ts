@@ -51,9 +51,104 @@ const catalogChildren: Routes = [
         (m) => m.ProductDetailsComponent,
       ),
   },
+
+  {
+    path: 'categories',
+    canMatch: [permissionGuard],
+    data: { permission: 'categories.view' },
+    loadComponent: () =>
+      import('./features/categories/pages/category-list/category-list.component').then(
+        (m) => m.CategoryListComponent,
+      ),
+  },
+  {
+    path: 'categories/create',
+    canMatch: [permissionGuard],
+    data: { permission: 'categories.create' },
+    loadComponent: () =>
+      import('./features/categories/pages/category-form/category-form.component').then(
+        (m) => m.CategoryFormComponent,
+      ),
+  },
+  {
+    path: 'categories/:id/edit',
+    canMatch: [permissionGuard],
+    data: { permission: 'categories.update' },
+    loadComponent: () =>
+      import('./features/categories/pages/category-form/category-form.component').then(
+        (m) => m.CategoryFormComponent,
+      ),
+  },
 ];
 
-const adminChildren: Routes = [...catalogChildren];
+const adminChildren: Routes = [
+  ...catalogChildren,
+
+  {
+    path: 'users',
+    canMatch: [permissionGuard],
+    data: { permission: 'users.view' },
+    loadComponent: () =>
+      import('./features/users/pages/user-list/user-list.component').then(
+        (m) => m.UserListComponent,
+      ),
+  },
+  {
+    path: 'users/create',
+    canMatch: [permissionGuard],
+    data: { permission: 'users.create' },
+    loadComponent: () =>
+      import('./features/users/pages/user-form/user-form.component').then(
+        (m) => m.UserFormComponent,
+      ),
+  },
+  {
+    path: 'users/:id/edit',
+    canMatch: [permissionGuard],
+    data: { permission: 'users.update' },
+    loadComponent: () =>
+      import('./features/users/pages/user-form/user-form.component').then(
+        (m) => m.UserFormComponent,
+      ),
+  },
+  {
+    path: 'users/:id',
+    canMatch: [permissionGuard],
+    data: { permission: 'users.view' },
+    loadComponent: () =>
+      import('./features/users/pages/user-details/user-details.component').then(
+        (m) => m.UserDetailsComponent,
+      ),
+  },
+
+  {
+    path: 'roles',
+    canMatch: [permissionGuard],
+    data: { permission: 'roles.view' },
+    loadComponent: () =>
+      import('./features/roles/pages/role-list/role-list.component').then(
+        (m) => m.RoleListComponent,
+      ),
+  },
+  {
+    path: 'roles/create',
+    canMatch: [permissionGuard],
+    data: { permission: 'roles.create' },
+    loadComponent: () =>
+      import('./features/roles/pages/role-form/role-form.component').then(
+        (m) => m.RoleFormComponent,
+      ),
+  },
+  {
+    path: 'roles/:id/edit',
+    canMatch: [permissionGuard],
+    data: { permission: 'roles.update' },
+    loadComponent: () =>
+      import('./features/roles/pages/role-form/role-form.component').then(
+        (m) => m.RoleFormComponent,
+      ),
+  },
+];
 
 export const routes: Routes = [
   {

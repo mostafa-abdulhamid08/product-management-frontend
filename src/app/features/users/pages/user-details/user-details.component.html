@@ -1,0 +1,54 @@
+@if (loading()) {
+  <div class="max-w-2xl rounded-md border border-border bg-surface p-6" aria-busy="true">
+    <span class="sr-only">Loading…</span>
+    @for (line of [1, 2, 3, 4]; track line) {
+      <div class="mb-4 h-3 w-full max-w-sm animate-pulse rounded-sm bg-border"></div>
+    }
+  </div>
+} @else if (missing()) {
+  <div class="rounded-md border border-border bg-surface">
+    <app-empty-state
+      heading="That user does not exist"
+      message="They may have been deleted since this link was made."
+    >
+      <a class="btn-primary" routerLink="/users">Back to users</a>
+    </app-empty-state>
+  </div>
+} @else if (failed()) {
+  <div class="rounded-md border border-border bg-surface">
+    <app-empty-state heading="Could not load this user" message="The request did not come back.">
+      <button type="button" class="btn-primary" (click)="load()">Try again</button>
+    </app-empty-state>
+  </div>
+} @else {
+  @if (user(); as person) {
+    <app-page-header [title]="person.name" [subtitle]="person.email">
+      <a class="btn-quiet" routerLink="/users">Back</a>
+      <a
+        *hasPermission="'users.update'"
+        class="btn-primary"
+        [routerLink]="['/users', person.id, 'edit']"
+      >
+        Edit
+      </a>
+    </app-page-header>
+
+    <div class="max-w-2xl rounded-md border border-border bg-surface p-6">
+      <dl class="m-0 grid grid-cols-[auto_1fr] items-start gap-x-8 gap-y-3">
+        <dt class="text-body font-medium text-text-secondary">Email</dt>
+        <dd class="m-0 text-body text-text">{{ person.email }}</dd>
+
+        <dt class="text-body font-medium text-text-secondary">Role</dt>
+        <dd class="m-0 text-body text-text">{{ person.role_display_name }}</dd>
+
+        <dt class="text-body font-medium text-text-secondary">Status</dt>
+        <dd class="m-0">
+          <app-status-badge [active]="person.is_active" [label]="person.status_label" />
+        </dd>
+
+        <dt class="text-body font-medium text-text-secondary">Created</dt>
+        <dd class="m-0 text-body text-text-secondary">{{ person.created_at | date: 'medium' }}</dd>
+      </dl>
+    </div>
+  }
+}

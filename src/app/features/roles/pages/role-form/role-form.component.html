@@ -1,0 +1,151 @@
+@if (missing()) {
+  <div class="rounded-md border border-border bg-surface">
+    <app-empty-state
+      heading="That role does not exist"
+      message="It may have been deleted since this link was made."
+    >
+      <a class="btn-primary" routerLink="/roles">Back to roles</a>
+    </app-empty-state>
+  </div>
+} @else if (blocked()) {
+  <div class="rounded-md border border-border bg-surface">
+    <app-empty-state
+      heading="super-admin cannot be edited"
+      message="It is protected so that nobody can remove the permission that reaches this screen. Removing roles.update from it would lock everyone out with no way back."
+    >
+      <a class="btn-primary" routerLink="/roles">Back to roles</a>
+    </app-empty-state>
+  </div>
+} @else {
+  <app-page-header [title]="heading()">
+    <a class="btn-quiet" routerLink="/roles">Cancel</a>
+  </app-page-header>
+
+  @if (loading()) {
+    <div class="rounded-md border border-border bg-surface p-6" aria-busy="true">
+      <span class="sr-only">Loading…</span>
+      @for (line of [1, 2, 3, 4, 5]; track line) {
+        <div class="mb-4 h-9 w-full max-w-md animate-pulse rounded-sm bg-border"></div>
+      }
+    </div>
+  } @else {
+    @if (formError(); as message) {
+      <p
+        class="mb-4 rounded-sm border border-danger bg-danger-subtle px-3 py-2 text-body text-danger"
+        role="alert"
+      >
+        {{ message }}
+      </p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="grid gap-6 lg:grid-cols-[22rem_1fr]">
+        <div class="rounded-md border border-border bg-surface p-6">
+          <label class="mb-1.5 block text-body font-medium text-text" for="name">Name</label>
+          <input
+            id="name"
+            type="text"
+            class="field"
+            placeholder="e.g. warehouse-staff"
+            formControlName="name"
+            [class.field-invalid]="fieldError('name')"
+          />
+          @if (fieldError('name'); as message) {
+            <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+          } @else {
+            <p class="mt-1.5 text-meta text-text-muted">
+              This is the key the API matches on. Lower case, no spaces.
+            </p>
+          }
+
+          <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="description">
+            Description
+          </label>
+          <textarea
+            id="description"
+            rows="3"
+            class="field h-auto py-2"
+            formControlName="description"
+            [class.field-invalid]="fieldError('description')"
+          ></textarea>
+          @if (fieldError('description'); as message) {
+            <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+          }
+        </div>
+
+        <div class="rounded-md border border-border bg-surface p-6">
+          <div class="mb-4 flex items-baseline justify-between gap-4">
+            <p class="m-0 text-body font-medium text-text">Permissions</p>
+            <p class="m-0 text-meta text-text-muted tabular-nums">
+              {{ selectedCount() }} / {{ totalCount() }} selected
+            </p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-table">
+              <thead>
+                <tr class="text-meta text-text-secondary">
+                  <th class="py-2 text-start font-medium">Resource</th>
+                  @for (action of actions(); track action) {
+                    <th class="w-24 py-2 text-center font-medium">
+                      <button
+                        type="button"
+                        class="cursor-pointer border-0 bg-transparent p-0 capitalize underline-offset-2 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        [attr.aria-label]="'Toggle ' + action + ' for every resource'"
+                        (click)="toggleColumn(action)"
+                      >
+                        {{ action }}
+                      </button>
+                    </th>
+                  }
+                  <th class="w-16 py-2 text-center font-medium">All</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (resource of resources(); track resource) {
+                  <tr class="border-t border-border">
+                    <td class="py-2.5 text-text capitalize">{{ resource }}</td>
+
+                    @for (action of actions(); track action) {
+                      <td class="py-2.5 text-center">
+                        <input
+                          type="checkbox"
+                          class="size-4 accent-primary"
+                          [checked]="isChecked(resource, action)"
+                          [attr.aria-label]="resource + ' ' + action"
+                          (change)="toggle(resource, action)"
+                        />
+                      </td>
+                    }
+
+                    <td class="py-2.5 text-center">
+                      <input
+                        type="checkbox"
+                        class="size-4 accent-primary"
+                        [checked]="isRowFull(resource)"
+                        [attr.aria-label]="'Toggle every action for ' + resource"
+                        (change)="toggleRow(resource)"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <p class="mt-4 mb-0 text-meta text-text-muted">
+            Hiding a control is UX. What actually stops someone is this list, enforced on every
+            API route.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <a class="btn-quiet" routerLink="/roles">Cancel</a>
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save role' }}
+        </button>
+      </div>
+    </form>
+  }
+}

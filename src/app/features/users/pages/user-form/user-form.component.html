@@ -1,0 +1,120 @@
+@if (missing()) {
+  <div class="rounded-md border border-border bg-surface">
+    <app-empty-state
+      heading="That user does not exist"
+      message="They may have been deleted since this link was made."
+    >
+      <a class="btn-primary" routerLink="/users">Back to users</a>
+    </app-empty-state>
+  </div>
+} @else {
+  <app-page-header [title]="heading()">
+    <a class="btn-quiet" routerLink="/users">Cancel</a>
+  </app-page-header>
+
+  @if (loading()) {
+    <div class="max-w-2xl rounded-md border border-border bg-surface p-6" aria-busy="true">
+      <span class="sr-only">Loading…</span>
+      @for (line of [1, 2, 3, 4]; track line) {
+        <div class="mb-4 h-9 w-full animate-pulse rounded-sm bg-border"></div>
+      }
+    </div>
+  } @else {
+    @if (formError(); as message) {
+      <p
+        class="mb-4 max-w-2xl rounded-sm border border-danger bg-danger-subtle px-3 py-2 text-body text-danger"
+        role="alert"
+      >
+        {{ message }}
+      </p>
+    }
+
+    <form class="max-w-2xl" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="rounded-md border border-border bg-surface p-6">
+        <label class="mb-1.5 block text-body font-medium text-text" for="name">Name</label>
+        <input
+          id="name"
+          type="text"
+          class="field"
+          formControlName="name"
+          [class.field-invalid]="fieldError('name')"
+        />
+        @if (fieldError('name'); as message) {
+          <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+        }
+
+        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          autocomplete="off"
+          class="field"
+          formControlName="email"
+          [class.field-invalid]="fieldError('email')"
+        />
+        @if (fieldError('email'); as message) {
+          <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+        }
+
+        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="role">Role</label>
+        <select
+          id="role"
+          class="field"
+          formControlName="role"
+          [class.field-invalid]="fieldError('role')"
+        >
+          <option value="">Select a role</option>
+          @for (role of roles(); track role.id) {
+            <option [value]="role.name">{{ role.display_name }}</option>
+          }
+        </select>
+        @if (fieldError('role'); as message) {
+          <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+        }
+
+        <hr class="my-6 border-0 border-t border-border" />
+
+        <label class="mb-1.5 block text-body font-medium text-text" for="password">
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          autocomplete="new-password"
+          class="field"
+          formControlName="password"
+          [class.field-invalid]="fieldError('password')"
+        />
+        @if (fieldError('password'); as message) {
+          <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+        } @else if (isEdit()) {
+          <p class="mt-1.5 text-meta text-text-muted">Leave blank to keep the current password.</p>
+        } @else {
+          <p class="mt-1.5 text-meta text-text-muted">At least 8 characters.</p>
+        }
+
+        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="password_confirmation">
+          Confirm password
+        </label>
+        <input
+          id="password_confirmation"
+          type="password"
+          autocomplete="new-password"
+          class="field"
+          formControlName="password_confirmation"
+          [class.field-invalid]="fieldError('password_confirmation')"
+        />
+        @if (fieldError('password_confirmation'); as message) {
+          <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+        }
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <a class="btn-quiet" routerLink="/users">Cancel</a>
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save user' }}
+        </button>
+      </div>
+    </form>
+  }
+}

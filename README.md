@@ -746,7 +746,8 @@ Every interactive element gets default, hover, active, focus-visible, and disabl
 | Categories list | search, pagination, result count. Columns: name, description, products count, created at. Edit and delete only — there is no category details screen |
 | Category form | name and description only |
 | Users list | search, role filter, status filter, pagination, result count. Columns: name, email, role, status. Row actions: view, edit, status toggle, delete — each gated by its own permission |
-| User form | name, email, password (+ confirmation), role select from `/api/roles/options` |
+| User details | read-only; email, role, status, created. Edit gated by permission |
+| User form | name, email, password (+ confirmation), role select from `/api/roles/options`. On edit the password is left blank to keep the current one |
 | Roles list | expandable rows showing the permission matrix, a per-action count out of four, `users_count`, and a total-roles footer. `super-admin` is listed with its actions disabled |
 | Role form | name, description, permission matrix over all four resources with row and column select-all |
 | 403 | a route you lack permission for, or one only the admin shell has. Short message + a link back to the dashboard |
@@ -829,7 +830,7 @@ catalog shell for the layout itself.
 - `inject()` over constructor injection.
 - Typed models for every API response. No `any`.
 - `price` is typed `string`, because the API sends `"39.50"` deliberately. Parse it to display it; never treat it as a number by accident.
-- Permission strings only in `NAV_ITEMS`, route `data`, the layout `canMatch` guards, and `*hasPermission`. Four places, never scattered through component logic.
+- Permission strings only in `NAV_ITEMS`, route `data`, the layout `canMatch` guards, and `*hasPermission`. Four places, never scattered through component logic. The roles form is not a fifth: it builds `resource.action` keys from the matrix the API returns, as **payload to send back**, not as a gate to check. Nothing there decides what this user may do.
 - `canMatch` for every guard. Never `canActivate`.
 - Features never import from other features. Shared code moves to `shared/`.
 - One component per file, and the file name matches the selector.

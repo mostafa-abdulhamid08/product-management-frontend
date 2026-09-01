@@ -87,10 +87,31 @@ body {
     @apply inline-flex size-8 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent text-text-muted transition-colors;
     @apply hover:bg-bg hover:text-text active:bg-border;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent;
   }
 
   .icon-btn-danger {
     @apply text-danger hover:bg-danger-subtle hover:text-danger focus-visible:outline-danger;
+    @apply disabled:hover:bg-transparent;
+  }
+
+  .toggle {
+    @apply relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full border-0 bg-border p-0 transition-colors;
+    @apply hover:bg-text-muted;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-border;
+  }
+
+  .toggle.is-on {
+    @apply bg-success hover:bg-success;
+  }
+
+  .toggle-knob {
+    @apply pointer-events-none ms-0.5 block size-4 rounded-full bg-surface transition-transform;
+  }
+
+  .toggle.is-on .toggle-knob {
+    @apply translate-x-4;
   }
 
   .page-btn {

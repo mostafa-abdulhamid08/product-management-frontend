@@ -158,45 +158,42 @@ work. Build it properly and copy its shape.
   complete and its Postman collection documents every response shape.
 - After completing any step, update the `## Current status
 
-**Steps 1-4 are done.** Angular 19.2 standalone, Tailwind 4.3, tokens in a `@theme`
-block in `src/styles.css` alongside the shared control classes (`.btn-primary`,
-`.btn-quiet`, `.btn-danger-text`, `.field`, `.icon-btn`, `.page-btn`).
+**Steps 1-5 are done.** Angular 19.2 standalone, Tailwind 4.3, tokens in a `@theme`
+block in `src/styles.css` with the shared control classes (`.btn-primary`,
+`.btn-quiet`, `.btn-danger-text`, `.field`, `.icon-btn`, `.page-btn`, `.toggle`).
 
-Shell (1): the two layouts, shared sidebar and topbar, `canMatch` route skeleton.
-Auth (2): login, `AuthService` HTTP, three interceptors, `restoreSession` in
-`provideAppInitializer`. Permissions (3): `core/directives/has-permission.directive.ts`
-and the permission-filtered sidebar, plus the fallthrough warning in `catalogGuard`.
+1-3: the two layouts and `canMatch` skeleton; login, `AuthService` HTTP, the three
+interceptors and `restoreSession` in `provideAppInitializer`; the `hasPermission`
+directive and the permission-filtered sidebar, plus the fallthrough warning in
+`catalogGuard`.
 
-Products (4), end to end and verified against the API: list with search, category
-and status filters, pagination, result count and all four states; details; a create
-and edit form sharing one component with image upload and preview; delete behind a
-confirm dialog. `core/guards/permission.guard.ts` gates each child route from route
-`data` and redirects to `/403`.
+4: Products end to end — list with search, category and status filters, pagination,
+result count and four states; details; a shared create/edit form with image upload;
+delete behind a confirm dialog.
+
+5: **Categories** (list with search and pagination, form, delete that surfaces the
+API's refusal when the category still holds products). **Users** (list with search,
+role and status filters; row actions view, edit, status toggle and delete, with the
+self rows disabled client-side; details; a form whose password is optional on edit).
+**Roles** (list with expandable per-role matrix over all four resources, per-action
+counts out of four, `users_count`, `super-admin` listed with its actions disabled;
+a form with row and column select-all and a live selected counter).
 
 Shared so far: `page-header`, `pagination`, `status-badge`, `confirm-dialog`,
-`empty-state`, `table-skeleton`, `toast-host`, and `pipes/price.pipe.ts`. No
-`data-table` yet — deliberately deferred until Categories and Users show what
-actually repeats.
+`empty-state`, `table-skeleton`, `toast-host`, and `pipes/price.pipe.ts` (EGP,
+`27,499.00 EGP`). Still no `data-table` — extract it now that three real tables
+exist, before Dashboard.
 
-Verified in the browser against localhost:8000 with the seeded accounts: the list
-against 25 real products, search, filters and both pages; details; an edit that
-saved through `POST` + `_method=PUT`; a create and then a delete of the same record,
-so the data is back to 25; client validation on an empty form; and as
-`viewer@example.com` the list shows no Add button and only the view icon, with
-`/products/create` redirecting to `/403`.
+Verified against the API on localhost:8000 with the seeded accounts, at every step.
+For step 5 specifically: categories listed with real counts and the delete refusal
+shown in the API's own words; the user status toggle flipped and flipped back so the
+seed is unchanged, with the signed-in user's own toggle and delete inert; all five
+roles listed including `super-admin` with its actions disabled; the expanded matrix
+matching the API exactly; both select-alls; and `/roles/1/edit` refused with an
+explanation rather than a form the server would reject.
 
-Two bugs found and fixed while testing. Component input binding sets an absent route
-param to `undefined`, not to the input's declared default, so `/products/create` read
-as edit mode and fetched `products/NaN`; both product pages now derive a numeric id
-and treat anything else as "no product". And a stale Vite dep-optimizer cache loaded
-two copies of Angular core, which broke `DatePipe` with NG0203 — `rm -rf .angular/cache`
-and restart if that reappears.
+Temporary: `shared/components/placeholder-page/` still stands in for `403` and
+`dashboard`, and for the catalog catch-all.
 
-Temporary: `shared/components/placeholder-page/` still stands in for `403`,
-`dashboard` and the catalog catch-all.
-
-Currency is settled: EGP, rendered `27,499.00 EGP` by `shared/pipes/price.pipe.ts`,
-which is the only place the code appears. Apply it to the dashboard's recent-products
-prices when that screen is built in step 6.
-
-Next: step 5 — Categories, Users, Roles, following the shape Products set.
+Next: step 6 — Dashboard, 403 and 404 as real screens, which retires the
+placeholder. Extract `data-table` first.
