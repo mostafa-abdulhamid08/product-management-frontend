@@ -1,0 +1,25 @@
+<div
+  class="fixed inset-0 z-40 flex items-center justify-center bg-text/40 p-6"
+  (click)="cancelled.emit()"
+>
+  <div
+    class="w-full max-w-md rounded-md border border-border bg-surface p-6 shadow-lg"
+    role="dialog"
+    aria-modal="true"
+    (click)="$event.stopPropagation()"
+  >
+    <h2 class="m-0 text-section font-semibold text-text">{{ heading() }}</h2>
+    @if (message()) {
+      <p class="mt-2 mb-0 text-body text-text-secondary">{{ message() }}</p>
+    }
+
+    <div class="mt-6 flex justify-end gap-2">
+      <button type="button" class="btn-quiet" [disabled]="busy()" (click)="cancelled.emit()">
+        Cancel
+      </button>
+      <button type="button" class="btn-danger-text" [disabled]="busy()" (click)="confirmed.emit()">
+        {{ busy() ? 'Working…' : confirmLabel() }}
+      </button>
+    </div>
+  </div>
+</div>

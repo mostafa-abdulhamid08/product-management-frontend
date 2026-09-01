@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
 import { catalogGuard } from './core/guards/catalog.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 
 const placeholder = () =>
   import('./shared/components/placeholder-page/placeholder-page.component').then(
@@ -12,6 +13,44 @@ const placeholder = () =>
 const catalogChildren: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   { path: 'dashboard', loadComponent: placeholder, data: { title: 'Dashboard' } },
+
+  {
+    path: 'products',
+    canMatch: [permissionGuard],
+    data: { permission: 'products.view' },
+    loadComponent: () =>
+      import('./features/products/pages/product-list/product-list.component').then(
+        (m) => m.ProductListComponent,
+      ),
+  },
+  // Literal before the wildcard, or `create` arrives at the details page as an id.
+  {
+    path: 'products/create',
+    canMatch: [permissionGuard],
+    data: { permission: 'products.create' },
+    loadComponent: () =>
+      import('./features/products/pages/product-form/product-form.component').then(
+        (m) => m.ProductFormComponent,
+      ),
+  },
+  {
+    path: 'products/:id/edit',
+    canMatch: [permissionGuard],
+    data: { permission: 'products.update' },
+    loadComponent: () =>
+      import('./features/products/pages/product-form/product-form.component').then(
+        (m) => m.ProductFormComponent,
+      ),
+  },
+  {
+    path: 'products/:id',
+    canMatch: [permissionGuard],
+    data: { permission: 'products.view' },
+    loadComponent: () =>
+      import('./features/products/pages/product-details/product-details.component').then(
+        (m) => m.ProductDetailsComponent,
+      ),
+  },
 ];
 
 const adminChildren: Routes = [...catalogChildren];

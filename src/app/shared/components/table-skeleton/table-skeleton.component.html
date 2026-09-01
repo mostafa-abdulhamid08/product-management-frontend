@@ -1,0 +1,10 @@
+<div class="p-4" aria-busy="true" aria-live="polite">
+  <span class="sr-only">Loading…</span>
+  @for (row of rowList(); track row) {
+    <div class="flex items-center gap-4 border-b border-border py-3 last:border-b-0">
+      @for (column of columnList(); track column) {
+        <div class="h-3 flex-1 animate-pulse rounded-sm bg-border"></div>
+      }
+    </div>
+  }
+</div>

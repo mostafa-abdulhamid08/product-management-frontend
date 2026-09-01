@@ -76,6 +76,39 @@ body {
     @apply disabled:cursor-not-allowed disabled:bg-bg disabled:text-text-muted;
   }
 
+  .btn-quiet {
+    @apply inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-border bg-surface px-4 text-body font-medium text-text-secondary transition-colors;
+    @apply hover:border-text-muted hover:text-text active:bg-bg;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:text-text-muted;
+  }
+
+  .icon-btn {
+    @apply inline-flex size-8 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent text-text-muted transition-colors;
+    @apply hover:bg-bg hover:text-text active:bg-border;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .icon-btn-danger {
+    @apply text-danger hover:bg-danger-subtle hover:text-danger focus-visible:outline-danger;
+  }
+
+  .page-btn {
+    @apply inline-flex h-8 min-w-8 cursor-pointer items-center justify-center rounded-sm border border-border bg-surface px-2 text-meta text-text-secondary transition-colors;
+    @apply hover:border-text-muted hover:text-text active:bg-bg;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:text-text-muted disabled:hover:border-border;
+  }
+
+  .page-btn.is-current {
+    @apply border-primary bg-primary-subtle font-medium text-primary;
+  }
+
+  .sr-only {
+    @apply absolute size-px overflow-hidden whitespace-nowrap;
+    clip-path: inset(50%);
+  }
+
   .field-invalid {
     @apply border-danger focus:outline-danger;
   }

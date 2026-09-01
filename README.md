@@ -93,12 +93,14 @@ src/
 │   ├── shared/                       reusable, no business logic
 │   │   ├── components/
 │   │   │   ├── page-header/
-│   │   │   ├── data-table/
 │   │   │   ├── pagination/
 │   │   │   ├── status-badge/
 │   │   │   ├── confirm-dialog/
 │   │   │   ├── empty-state/
-│   │   │   └── table-skeleton/
+│   │   │   ├── table-skeleton/
+│   │   │   └── toast-host/
+│   │   ├── pipes/
+│   │   │   └── price.pipe.ts
 │   │   └── (no directives — see core/directives)
 │   │
 │   ├── app.routes.ts
@@ -114,6 +116,18 @@ public/
 ```
 
 **What goes where**
+
+**Pipes belong in `shared/`, directives did not.** A pipe is a display transform
+with no service dependency — `price` takes a string and returns a string, and knows
+nothing about auth or any feature, so it sits in `shared/pipes/` like any other dumb
+reusable piece. `hasPermission` had to go to `core/` for the opposite reason: it
+injects `AuthService`. The rule is not "directives here, pipes there" — it is
+whether the thing reaches into `core/`.
+
+**No `data-table` yet.** A generic table component is easy to get wrong before you
+have seen more than one table, so Products writes its own markup. Extract it when
+Categories and Users are in — three real tables show which parts actually repeat and
+which only looked like they would.
 
 - `core/` — anything instantiated once for the whole app. Never imported by `shared/`.
 - `features/` — one folder per resource, mirroring the backend. Each owns its pages, its service, and its models. Features never import from each other.
@@ -546,6 +560,11 @@ so money never becomes one in transit.
 
 Type it as `string` on the model. Parse it at the point of display, and never do
 arithmetic on it without converting explicitly and rounding on the way back out.
+
+**Amounts are EGP, rendered as `27,499.00 EGP`** — number first, code after, the way
+a price reads in Egypt. Every price goes through `shared/pipes/price.pipe.ts`, which
+is the only place the currency appears, so changing it is one edit. The screenshots
+show `$`; they are wrong about this, as they are about colour.
 
 ### Validation errors
 

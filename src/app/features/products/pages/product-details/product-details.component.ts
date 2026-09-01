@@ -1,0 +1,104 @@
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+
+import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { PricePipe } from '../../../../shared/pipes/price.pipe';
+import { Product } from '../../models/product.model';
+import { ProductService } from '../../services/product.service';
+
+@Component({
+  selector: 'app-product-details',
+  imports: [
+    DatePipe,
+    RouterLink,
+    HasPermissionDirective,
+    PageHeaderComponent,
+    StatusBadgeComponent,
+    EmptyStateComponent,
+    ConfirmDialogComponent,
+    PricePipe,
+  ],
+  templateUrl: './product-details.component.html',
+})
+export class ProductDetailsComponent implements OnInit {
+  private readonly products = inject(ProductService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+
+  /** Bound from the route parameter by withComponentInputBinding(). */
+  readonly id = input<string | undefined>(undefined);
+
+  /** A non-numeric id is a bad link, not a request worth making. */
+  readonly productId = computed(() => {
+    const parsed = Number(this.id());
+
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  });
+
+  readonly product = signal<Product | null>(null);
+  readonly loading = signal(true);
+  readonly missing = signal(false);
+  readonly failed = signal(false);
+  readonly confirming = signal(false);
+  readonly deleting = signal(false);
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    const id = this.productId();
+
+    if (id === null) {
+      this.missing.set(true);
+      this.loading.set(false);
+
+      return;
+    }
+
+    this.loading.set(true);
+    this.missing.set(false);
+    this.failed.set(false);
+
+    this.products.getById(id).subscribe({
+      next: (product) => {
+        this.product.set(product);
+        this.loading.set(false);
+      },
+      error: (error: { status?: number }) => {
+        // 404 is left to the component on purpose — a missing record is not a
+        // page error, and the interceptor does not redirect for it.
+        this.missing.set(error.status === 404);
+        this.failed.set(error.status !== 404);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  confirmDelete(): void {
+    const product = this.product();
+
+    if (!product) {
+      return;
+    }
+
+    this.deleting.set(true);
+
+    this.products.delete(product.id).subscribe({
+      next: () => {
+        this.toast.show('success', `${product.name} was deleted.`);
+        this.router.navigateByUrl('/products');
+      },
+      error: () => {
+        this.deleting.set(false);
+        this.confirming.set(false);
+      },
+    });
+  }
+}

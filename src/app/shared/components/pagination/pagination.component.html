@@ -1,0 +1,41 @@
+<div class="flex flex-wrap items-center justify-between gap-4 border-t border-border px-4 py-3">
+  <p class="m-0 text-meta text-text-secondary">
+    Showing {{ from() }} to {{ to() }} of {{ meta().total }}
+  </p>
+
+  @if (meta().last_page > 1) {
+    <nav class="flex items-center gap-1" aria-label="Pagination">
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="meta().current_page === 1"
+        (click)="go(meta().current_page - 1)"
+        aria-label="Previous page"
+      >
+        &lsaquo;
+      </button>
+
+      @for (page of pages(); track page) {
+        <button
+          type="button"
+          class="page-btn"
+          [class.is-current]="page === meta().current_page"
+          [attr.aria-current]="page === meta().current_page ? 'page' : null"
+          (click)="go(page)"
+        >
+          {{ page }}
+        </button>
+      }
+
+      <button
+        type="button"
+        class="page-btn"
+        [disabled]="meta().current_page === meta().last_page"
+        (click)="go(meta().current_page + 1)"
+        aria-label="Next page"
+      >
+        &rsaquo;
+      </button>
+    </nav>
+  }
+</div>
