@@ -1,0 +1,10 @@
+:host {
+  display: block;
+}
+
+/* routerLinkActive toggles this class, so it cannot be expressed as a utility. */
+.link.is-active {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-weight: 500;
+}

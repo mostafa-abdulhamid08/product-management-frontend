@@ -1,0 +1,12 @@
+<header
+  class="flex h-14 items-center justify-between border-b border-border bg-surface px-6"
+>
+  <span class="text-section font-semibold text-primary">Product Management</span>
+
+  @if (user(); as current) {
+    <div class="flex flex-col items-end leading-tight">
+      <span class="text-body text-text">{{ current.name }}</span>
+      <span class="text-meta text-text-muted">{{ current.role_display_name }}</span>
+    </div>
+  }
+</header>

@@ -61,11 +61,16 @@ has already downloaded.
 
 Route shape:
 
-    { path: '', canMatch: [adminGuard],   loadComponent: AdminLayout,   children: [...] }
-    { path: '', canMatch: [catalogGuard], loadComponent: CatalogLayout, children: [...] }
     { path: 'login', canMatch: [guestGuard], loadComponent: Login }
     { path: '403', ... }
+    { path: '', canMatch: [adminGuard],   loadComponent: AdminLayout,   children: [...] }
+    { path: '', canMatch: [catalogGuard], loadComponent: CatalogLayout, children: [...] }
     { path: '**', ... }
+
+Order matters: `login` and `403` must be declared before the two empty-path
+layouts. An empty path matches any URL as a prefix, and each layout now has a
+catch-all child, so a shell declared first would swallow /login and render 403
+at it — leaving no way to sign in.    
 
 Inside a layout, `*hasPermission` still governs individual buttons and row
 actions, and each child route carries its own permission guard. The layout
@@ -149,36 +154,37 @@ work. Build it properly and copy its shape.
 - Don't create documentation or summary files unless I ask.
 - Verify against the running API, not against assumptions. The backend is
   complete and its Postman collection documents every response shape.
-- After completing any step, update the `## Current status` section below to
-  reflect what now exists and what the next step is. Do this without being
-  asked — a stale status section is worse than none, because the next session
-  starts from a wrong picture.
+- After completing any step, update the `## Current status
 
-## Environment
+**Step 1 (shell) is done.** Angular 19.2 standalone, Tailwind 4.3 wired through
+`.postcssrc.json`, design tokens in a `@theme` block in `src/styles.css`.
 
-The Laravel API runs on `http://localhost:8000` via `php artisan serve`, not
-on its Herd `.test` domain. That is deliberate: `SameSite=lax` session cookies
-are only sent between hosts sharing a registrable domain, and
-`localhost:4200` and `product-management-api.test` do not. Both sides must sit
-under `localhost`.
+What exists:
 
-Seeded login: `admin@example.com` / `password`.
+- `core/models/user.model.ts`, `core/services/auth.service.ts` — state only: the
+  user signal, `isAuthenticated`, `permissions`, `hasPermission`, `hasAny`. No
+  HTTP yet.
+- `core/guards/` — `admin.guard.ts` (bare `false`, falls through),
+  `catalog.guard.ts` and `guest.guard.ts` (UrlTree redirects).
+- `layout/` — `admin-layout`, `catalog-layout`, and the `sidebar` and `topbar`
+  both shells share. `sidebar/nav-items.ts` holds `NAV_ITEMS`; the catalog shell
+  passes the slice without `adminOnly`.
+- `app.routes.ts` — the full `canMatch` skeleton. `login` and `403` above the two
+  empty-path layouts; the catalog layout ends with the 403 catch-all child; the
+  admin layout has none, so an unmatched path there reaches the outer `**` as 404.
 
-## Current status
+Verified in the browser: signed out, `/products` redirects to `/login`; as a super
+admin the admin shell renders five nav links; as a viewer the catalog shell renders
+three and `/users` shows 403 inside the shell with the sidebar intact. Each layout
+builds as its own lazy chunk, so the shell a user does not get is never downloaded.
 
-Project exists. `ng new` has run: Angular 19.2, standalone, CSS, zone-based change
-detection. Tailwind 4.3 is installed and wired up — `@import "tailwindcss"` plus a
-`.postcssrc.json`, no JS config file. The design tokens from `README.md` live in
-`src/styles.css` inside a `@theme` block, so each one is both a CSS custom property
-and a Tailwind utility.
+Temporary, to be deleted as real screens land:
+`shared/components/placeholder-page/` stands in for every route. `login`, `403`,
+`dashboard` and the catalog catch-all all render it.
 
-`src/app/` is still the CLI default: `AppComponent`, an empty `app.routes.ts`, an
-`app.config.ts` with only `provideRouter` and `provideZoneChangeDetection`. No
-`core/`, `layout/`, `features/` or `shared/` yet, and no `environments/`.
+Not built: no `environments/`, no interceptors, no `/me` bootstrap. Until that
+bootstrap exists the guards see an empty permission list, so every session lands on
+`/login` — the shells are unreachable at runtime by design, not by fault.
 
-The shell design is settled and written up in `README.md`: two layouts chosen by
-`canMatch`, guards returning `UrlTree` except `adminGuard`, and a 403 catch-all as
-the last child of each layout.
-
-Next: step 1 of the build order — the two layouts, sidebar, topbar, and the
-`canMatch` routing skeleton.
+Next: step 2 — login, `AuthService` HTTP, interceptors, and the `/me` bootstrap
+resolving before the first route is matched.
