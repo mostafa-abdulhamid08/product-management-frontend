@@ -47,6 +47,8 @@ Never treat a hidden button as protection, and never skip a backend permission b
 src/
 ├── app/
 │   ├── core/                        singletons, loaded once
+│   │   ├── directives/
+│   │   │   └── has-permission.directive.ts
 │   │   ├── guards/
 │   │   │   ├── admin.guard.ts        canMatch — selects AdminLayout
 │   │   │   ├── catalog.guard.ts      canMatch — selects CatalogLayout
@@ -97,8 +99,7 @@ src/
 │   │   │   ├── confirm-dialog/
 │   │   │   ├── empty-state/
 │   │   │   └── table-skeleton/
-│   │   └── directives/
-│   │       └── has-permission.directive.ts
+│   │   └── (no directives — see core/directives)
 │   │
 │   ├── app.routes.ts
 │   └── app.config.ts
@@ -184,6 +185,18 @@ A structural directive keeps templates readable and stops permission strings fro
   <i class="icon-trash"></i>
 </button>
 ```
+
+Pass an array where holding **any one** of several permissions is enough, which is
+the same shape as the OR-gated form endpoints:
+
+```html
+<a *hasPermission="['roles.view', 'users.view']">Administration</a>
+```
+
+**It lives in `core/directives/`, not `shared/`.** It injects `AuthService`, and
+two rules forbid that from `shared/`: shared code holds no permission logic, and
+`shared/` never imports `core/`. A directive whose entire job is a permission
+decision is core code that happens to be reusable.
 
 ### The sidebar
 
@@ -290,6 +303,42 @@ landing in the shell built for them.
 
 The rule, stated once: **return `false` only when there is a deliberate next
 candidate to fall through to.** In this route table that is true exactly once.
+
+### The fallthrough trap: a mysterious 403
+
+Falling through is what makes two shells at one path work. It is also the one
+behaviour here that can waste an afternoon, because it turns a **routing** mistake
+into what looks like a **permission** mistake.
+
+A super admin opens `/roles` and gets 403 in the catalog shell, with three nav
+links instead of five. Nothing is wrong with their permissions. What happened is:
+
+1. `adminGuard` passed — they do hold `roles.view`.
+2. The admin layout matched `path: ''` and tried its children against `roles`.
+3. No child matched, because the route is missing from `adminChildren`.
+4. A parent whose children do not match is **not** a match, so Angular backtracks
+   and tries the next candidate.
+5. The catalog layout matches, its catch-all child renders, and the user sees 403.
+
+Every step is correct. The result is a screen saying "not yours" about a route that
+is not anyone's, because it is not declared. **Debugging a 403 that makes no sense
+starts in `app.routes.ts`, not in the permission list** — check the route exists as
+a child of the layout you expect, and that its path is spelled the way you typed it
+in the address bar.
+
+This is the cost of the fallthrough, and it is worth paying: the alternative is a
+single shell with conditionals inside it. But it is silent, so in development it is
+made loud. `catalogGuard` warns on the console whenever it runs for a user who
+holds admin permissions — that combination can only mean the admin layout matched
+and then failed on its children:
+
+```
+[routes] admin route not found: /roles — falling through to the catalog shell,
+which will render 403. This is a missing child route in app.routes.ts, not a
+missing permission.
+```
+
+The check is wrapped in `isDevMode()`, so production stays silent.
 
 ### Child routes still carry their own permission
 

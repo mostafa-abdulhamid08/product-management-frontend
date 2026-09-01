@@ -1,6 +1,6 @@
 <nav class="nav" aria-label="Main">
   <ul class="flex list-none flex-col gap-1 p-3 m-0">
-    @for (item of items(); track item.route) {
+    @for (item of visibleItems(); track item.route) {
       <li>
         <a
           class="link flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-body text-text-secondary no-underline transition-colors hover:bg-bg hover:text-text active:bg-border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

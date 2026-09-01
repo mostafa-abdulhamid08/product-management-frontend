@@ -158,38 +158,59 @@ work. Build it properly and copy its shape.
   complete and its Postman collection documents every response shape.
 - After completing any step, update the `## Current status
 
-**Steps 1 and 2 are done.** Angular 19.2 standalone, Tailwind 4.3, tokens in a
+**Steps 1, 2 and 3 are done.** Angular 19.2 standalone, Tailwind 4.3, tokens in a
 `@theme` block in `src/styles.css` alongside the shared `.btn-primary`,
 `.btn-danger-text` and `.field` classes.
 
 Shell (step 1): `layout/admin-layout`, `layout/catalog-layout`, and the `sidebar`
-and `topbar` they share. `sidebar/nav-items.ts` holds `NAV_ITEMS`; the catalog
-shell passes the slice without `adminOnly`. `app.routes.ts` carries the full
-`canMatch` skeleton — `login` and `403` above the two empty-path layouts, the 403
-catch-all as the catalog layout's last child, the admin layout without one.
+and `topbar` they share. `app.routes.ts` carries the `canMatch` skeleton — `login`
+and `403` above the two empty-path layouts, the 403 catch-all as the catalog
+layout's last child, the admin layout without one.
 
-Auth (step 2): `environment.ts`, `ApiResponse`/`Paginated` models, `LocaleService`,
-`ToastService`, the three interceptors (`credentials`, `locale`, `error`), the
-login screen, and `AuthService` with real HTTP — `csrfCookie`, `login`, `logout`,
-`me`, `restoreSession`. `restoreSession` runs in `provideAppInitializer`, which
-settles before the router's first navigation. Logout sits in the topbar.
+Auth (step 2): `environment.ts`, the API models, `LocaleService`, `ToastService`,
+the three interceptors, the login screen, and `AuthService` with real HTTP.
+`restoreSession` runs in `provideAppInitializer`, which settles before the router's
+first navigation. Logout sits in the topbar. `core/http-context.ts` holds
+`SKIP_AUTH_REDIRECT`, `SKIP_FORBIDDEN_REDIRECT` and `CSRF_RETRIED`.
 
-`core/http-context.ts` holds three context tokens: `SKIP_AUTH_REDIRECT` (the
-bootstrap expects a 401), `SKIP_FORBIDDEN_REDIRECT` (a 403 on login is a
-deactivated account, not an unauthorised route), and `CSRF_RETRIED` (so the 419
-replay cannot loop).
+Permissions (step 3): `core/directives/has-permission.directive.ts` — takes one
+permission or an array, where holding any one is enough. It lives in `core/`, not
+`shared/`, because it injects `AuthService`: `shared/` holds no permission logic
+and never imports `core/`. `README.md`'s folder tree has been corrected to match.
+The sidebar filters `NAV_ITEMS` through `hasPermission` in a `computed`.
 
-Verified against the API on localhost:8000: bad credentials return 422 and land on
-the right field; a good login reaches the admin shell; a hard refresh on
-`/dashboard` fires `/sanctum/csrf-cookie` then `/api/me` and stays put; logout
-returns 204 and redirects; and with the locale set to `ar` the validation message
-comes back in Arabic, which confirms `Accept-Language` end to end.
+The fallthrough trap is documented in `README.md` and instrumented: when
+`catalogGuard` runs for a user who holds admin permissions, that can only mean the
+admin layout matched and then failed on its children, so it logs a console warning
+naming the path. Wrapped in `isDevMode()`, silent in production.
+
+Verified against the API on localhost:8000: bad credentials 422 onto the field; good
+login reaches the admin shell; hard refresh fires csrf then `/me` and stays put;
+logout 204 and redirect; locale `ar` returns Arabic validation messages. For step 3,
+both filters were checked in both directions — a permission the user holds renders,
+one they do not is removed from the DOM — and the fallthrough warning was confirmed
+on the console at `/roles`.
 
 Temporary: `shared/components/placeholder-page/` still stands in for `403`,
 `dashboard` and the catalog catch-all. Delete it as real screens land.
 
-Not built: no `hasPermission` directive yet, no i18n message files and no language
-switcher (`LocaleService` exists and defaults to `en`), and no feature routes — so
-a real path like `/products` has no child route in either shell.
+Not built: no i18n message files and no language switcher (`LocaleService` exists
+and defaults to `en`), and no feature routes — so `/products` still has no child
+route in either shell.
 
-Next: step 3 — the `hasPermission` directive and the permission-filtered sidebar.
+`DemoDataSeeder` has been run: 5 categories, 25 products (no images), and five more
+accounts besides the super admin, all with password `password` —
+`manager@` (product-manager), `editor@` (product-editor), `inventory@`
+(inventory-staff), `viewer@` (viewer), and `deactivated@` (product-manager with
+`is_active` false).
+
+The catalog shell is confirmed with a real login: `viewer@example.com` gets three
+nav links and no Users or Roles; `/users` renders 403 inside that shell with the
+sidebar intact and the URL preserved, and the fallthrough warning correctly stays
+silent because that is a real 403 rather than a missing route;
+`deactivated@example.com` is refused on the login form with "This account has been
+deactivated." rather than being sent to `/403`; and the super admin still gets all
+five links.
+
+Next: step 4 — Products end to end: list, filters, pagination, form, upload,
+details, delete.
