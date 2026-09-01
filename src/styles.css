@@ -1,1 +1,53 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+/* Design tokens. Defined in @theme rather than :root so each one is both a CSS
+   custom property and a Tailwind utility — --color-primary answers to
+   var(--color-primary) and to bg-primary, from a single declaration. Changing a
+   value here changes both. */
+@theme {
+  /* brand */
+  --color-primary: #d32f2f;
+  --color-primary-hover: #b02525;
+  --color-primary-subtle: #fdecec; /* active nav item, focus ring bg */
+
+  /* destructive — deliberately darker than primary */
+  --color-danger: #b71c1c;
+  --color-danger-subtle: #fdecec;
+
+  /* semantic */
+  --color-success: #1b7f4c;
+  --color-success-subtle: #e7f5ec;
+  --color-warning: #b26b00;
+  --color-warning-subtle: #fdf3e3;
+
+  /* neutrals — warm grey ramp */
+  --color-bg: #f7f7f8; /* page background */
+  --color-surface: #ffffff; /* cards, tables */
+  --color-border: #e6e6e8;
+  --color-text: #17171a;
+  --color-text-secondary: #5c5c66;
+  --color-text-muted: #8a8a94;
+
+  /* radius */
+  --radius-sm: 6px; /* inputs, badges */
+  --radius-md: 8px; /* cards, buttons */
+
+  /* type */
+  --text-page-title: 20px;
+  --text-section: 16px;
+  --text-body: 14px;
+  --text-table: 13px;
+  --text-meta: 12px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-body);
+}
