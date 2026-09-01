@@ -17,7 +17,12 @@ const catalogChildren: Routes = [
 const adminChildren: Routes = [...catalogChildren];
 
 export const routes: Routes = [
-  { path: 'login', canMatch: [guestGuard], loadComponent: placeholder, data: { title: 'Login' } },
+  {
+    path: 'login',
+    canMatch: [guestGuard],
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
   { path: '403', loadComponent: placeholder, data: { title: 'Forbidden' } },
 
   {

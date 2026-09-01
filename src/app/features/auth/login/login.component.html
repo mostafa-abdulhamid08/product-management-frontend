@@ -1,0 +1,94 @@
+<div class="flex min-h-screen items-center justify-center bg-bg p-6">
+  <div class="w-full max-w-96 rounded-md border border-border bg-surface p-8">
+    <div class="flex items-center justify-center gap-2.5">
+      <svg
+        class="size-6 text-primary"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
+        <path d="m3 8 9 5 9-5" />
+        <path d="M12 13v8" />
+      </svg>
+      <span class="text-section font-semibold text-text">Product Management</span>
+    </div>
+
+    <h1 class="mt-8 mb-6 text-page-title font-semibold text-text">Sign in</h1>
+
+    @if (formError(); as message) {
+      <p
+        class="mb-4 rounded-sm border border-danger bg-danger-subtle px-3 py-2 text-body text-danger"
+        role="alert"
+      >
+        {{ message }}
+      </p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="mb-1.5 block text-body font-medium text-text" for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        autocomplete="username"
+        placeholder="you@example.com"
+        class="field"
+        [class.field-invalid]="fieldError('email')"
+      />
+      @if (fieldError('email'); as message) {
+        <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+      }
+
+      <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="password">
+        Password
+      </label>
+      <div class="relative">
+        <input
+          id="password"
+          [type]="passwordVisible() ? 'text' : 'password'"
+          formControlName="password"
+          autocomplete="current-password"
+          placeholder="Enter your password"
+          class="field pe-10"
+          [class.field-invalid]="fieldError('password')"
+        />
+        <button
+          type="button"
+          class="absolute inset-y-0 end-0 flex w-10 items-center justify-center rounded-sm text-text-muted transition-colors hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="passwordVisible()"
+          (click)="togglePassword()"
+        >
+          <svg
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+            @if (passwordVisible()) {
+              <path d="m4 20 16-16" />
+            }
+          </svg>
+        </button>
+      </div>
+      @if (fieldError('password'); as message) {
+        <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn-primary mt-6 w-full" [disabled]="submitting()">
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+  </div>
+</div>

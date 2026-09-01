@@ -1,0 +1,24 @@
+<div class="fixed end-6 bottom-6 z-50 flex flex-col gap-2" aria-live="polite">
+  @for (toast of toasts(); track toast.id) {
+    <div
+      class="flex items-center gap-3 rounded-md border px-4 py-3 text-body shadow-lg"
+      [class.border-danger]="toast.kind === 'error'"
+      [class.bg-danger-subtle]="toast.kind === 'error'"
+      [class.text-danger]="toast.kind === 'error'"
+      [class.border-success]="toast.kind === 'success'"
+      [class.bg-success-subtle]="toast.kind === 'success'"
+      [class.text-success]="toast.kind === 'success'"
+      role="status"
+    >
+      <span>{{ toast.message }}</span>
+      <button
+        type="button"
+        class="cursor-pointer rounded-sm border-0 bg-transparent px-1 text-current opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        aria-label="Dismiss"
+        (click)="dismissed.emit(toast.id)"
+      >
+        &times;
+      </button>
+    </div>
+  }
+</div>

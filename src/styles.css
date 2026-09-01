@@ -51,3 +51,32 @@ body {
   color: var(--color-text);
   font-size: var(--text-body);
 }
+
+/* Shared control styles. Global rather than per-component so every screen gets
+   the same button and field, and the states are defined once. */
+@layer components {
+  .btn-primary {
+    @apply inline-flex h-9 cursor-pointer items-center justify-center rounded-md border-0 bg-primary px-4 text-body font-medium text-surface transition-colors;
+    @apply hover:bg-primary-hover active:bg-primary-hover;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:bg-text-muted;
+  }
+
+  .btn-danger-text {
+    @apply inline-flex h-9 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent px-3 text-body font-medium text-danger transition-colors;
+    @apply hover:bg-danger-subtle active:bg-danger-subtle;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger;
+    @apply disabled:cursor-not-allowed disabled:text-text-muted disabled:hover:bg-transparent;
+  }
+
+  .field {
+    @apply block h-9 w-full rounded-sm border border-border bg-surface px-3 text-body text-text transition-colors;
+    @apply placeholder:text-text-muted hover:border-text-muted;
+    @apply focus:outline-2 focus:outline-offset-2 focus:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:bg-bg disabled:text-text-muted;
+  }
+
+  .field-invalid {
+    @apply border-danger focus:outline-danger;
+  }
+}

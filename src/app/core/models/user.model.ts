@@ -7,4 +7,5 @@ export interface User {
   role: string;
   role_display_name: string;
   permissions: string[];
+  created_at: string;
 }

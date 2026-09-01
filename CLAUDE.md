@@ -158,35 +158,38 @@ work. Build it properly and copy its shape.
   complete and its Postman collection documents every response shape.
 - After completing any step, update the `## Current status
 
-**Step 1 (shell) is done.** Angular 19.2 standalone, Tailwind 4.3 wired through
-`.postcssrc.json`, design tokens in a `@theme` block in `src/styles.css`.
+**Steps 1 and 2 are done.** Angular 19.2 standalone, Tailwind 4.3, tokens in a
+`@theme` block in `src/styles.css` alongside the shared `.btn-primary`,
+`.btn-danger-text` and `.field` classes.
 
-What exists:
+Shell (step 1): `layout/admin-layout`, `layout/catalog-layout`, and the `sidebar`
+and `topbar` they share. `sidebar/nav-items.ts` holds `NAV_ITEMS`; the catalog
+shell passes the slice without `adminOnly`. `app.routes.ts` carries the full
+`canMatch` skeleton — `login` and `403` above the two empty-path layouts, the 403
+catch-all as the catalog layout's last child, the admin layout without one.
 
-- `core/models/user.model.ts`, `core/services/auth.service.ts` — state only: the
-  user signal, `isAuthenticated`, `permissions`, `hasPermission`, `hasAny`. No
-  HTTP yet.
-- `core/guards/` — `admin.guard.ts` (bare `false`, falls through),
-  `catalog.guard.ts` and `guest.guard.ts` (UrlTree redirects).
-- `layout/` — `admin-layout`, `catalog-layout`, and the `sidebar` and `topbar`
-  both shells share. `sidebar/nav-items.ts` holds `NAV_ITEMS`; the catalog shell
-  passes the slice without `adminOnly`.
-- `app.routes.ts` — the full `canMatch` skeleton. `login` and `403` above the two
-  empty-path layouts; the catalog layout ends with the 403 catch-all child; the
-  admin layout has none, so an unmatched path there reaches the outer `**` as 404.
+Auth (step 2): `environment.ts`, `ApiResponse`/`Paginated` models, `LocaleService`,
+`ToastService`, the three interceptors (`credentials`, `locale`, `error`), the
+login screen, and `AuthService` with real HTTP — `csrfCookie`, `login`, `logout`,
+`me`, `restoreSession`. `restoreSession` runs in `provideAppInitializer`, which
+settles before the router's first navigation. Logout sits in the topbar.
 
-Verified in the browser: signed out, `/products` redirects to `/login`; as a super
-admin the admin shell renders five nav links; as a viewer the catalog shell renders
-three and `/users` shows 403 inside the shell with the sidebar intact. Each layout
-builds as its own lazy chunk, so the shell a user does not get is never downloaded.
+`core/http-context.ts` holds three context tokens: `SKIP_AUTH_REDIRECT` (the
+bootstrap expects a 401), `SKIP_FORBIDDEN_REDIRECT` (a 403 on login is a
+deactivated account, not an unauthorised route), and `CSRF_RETRIED` (so the 419
+replay cannot loop).
 
-Temporary, to be deleted as real screens land:
-`shared/components/placeholder-page/` stands in for every route. `login`, `403`,
-`dashboard` and the catalog catch-all all render it.
+Verified against the API on localhost:8000: bad credentials return 422 and land on
+the right field; a good login reaches the admin shell; a hard refresh on
+`/dashboard` fires `/sanctum/csrf-cookie` then `/api/me` and stays put; logout
+returns 204 and redirects; and with the locale set to `ar` the validation message
+comes back in Arabic, which confirms `Accept-Language` end to end.
 
-Not built: no `environments/`, no interceptors, no `/me` bootstrap. Until that
-bootstrap exists the guards see an empty permission list, so every session lands on
-`/login` — the shells are unreachable at runtime by design, not by fault.
+Temporary: `shared/components/placeholder-page/` still stands in for `403`,
+`dashboard` and the catalog catch-all. Delete it as real screens land.
 
-Next: step 2 — login, `AuthService` HTTP, interceptors, and the `/me` bootstrap
-resolving before the first route is matched.
+Not built: no `hasPermission` directive yet, no i18n message files and no language
+switcher (`LocaleService` exists and defaults to `en`), and no feature routes — so
+a real path like `/products` has no child route in either shell.
+
+Next: step 3 — the `hasPermission` directive and the permission-filtered sidebar.
