@@ -68,9 +68,11 @@ Route shape:
     { path: '**', ... }
 
 Order matters: `login` and `403` must be declared before the two empty-path
-layouts. An empty path matches any URL as a prefix, and each layout now has a
+layouts. An empty path matches any URL as a prefix, and the catalog layout has a
 catch-all child, so a shell declared first would swallow /login and render 403
-at it — leaving no way to sign in.    
+at it — leaving no way to sign in. (Only the catalog layout carries that child.
+The admin layout declares every route, so an unmatched path there genuinely does
+not exist and falling through to the outer `**` as a 404 is the honest answer.)    
 
 Inside a layout, `*hasPermission` still governs individual buttons and row
 actions, and each child route carries its own permission guard. The layout

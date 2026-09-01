@@ -670,25 +670,86 @@ Every interactive element gets default, hover, active, focus-visible, and disabl
 
 | Screen | Notes |
 |---|---|
-| Login | outside the shell, centred card, no register link |
-| Dashboard | permission-driven stat cards + recent products |
-| Products list | search, category filter, status filter, pagination, row actions |
-| Product details | read-only view; Edit and Delete gated by permission |
-| Product form | create and edit share one component; image upload with preview |
-| Categories list | search, pagination, inline edit/delete |
+| Login | outside the shell, centred card. Email, password with a visibility toggle, submit. No register link, no remember-me, no forgot-password |
+| Dashboard | permission-driven stat cards + recent products (name, category, price, stock, status, created at) with a View all link to `/products` |
+| Products list | search, category filter, status filter, pagination, result count, row actions. Image thumbnail as the first column |
+| Product details | read-only; image, category, price, stock, status, description, created at, updated at. Back link. Edit filled, Delete text-only, both permission-gated |
+| Product form | create and edit share one component; image upload with preview, PNG/JPG up to 2 MB |
+| Categories list | search, pagination, result count. Columns: name, description, products count, created at. Edit and delete only — there is no category details screen |
 | Category form | name and description only |
-| Users list | search, role filter, status filter, status toggle in the row |
-| User form | name, email, password, role select |
-| Roles list | expandable rows showing the permission matrix |
-| Role form | name, description, permission matrix with row and column select-all |
-| 403 | a route you lack permission for, or one only the admin shell has |
-| 404 | a path that exists in no shell |
+| Users list | search, role filter, status filter, pagination, result count. Columns: name, email, role, status. Row actions: view, edit, status toggle, delete — each gated by its own permission |
+| User form | name, email, password (+ confirmation), role select from `/api/roles/options` |
+| Roles list | expandable rows showing the permission matrix, a per-action count out of four, `users_count`, and a total-roles footer. `super-admin` is listed with its actions disabled |
+| Role form | name, description, permission matrix over all four resources with row and column select-all |
+| 403 | a route you lack permission for, or one only the admin shell has. Short message + a link back to the dashboard |
+| 404 | a path that exists in no shell. Same shape as the 403 |
 
 The 403 renders bare at `/403` and inside the catalog shell as its catch-all, so
 build it to work with and without a sidebar. The 404 sits outside both shells and
 always renders bare.
 
-The screenshots in `/docs` show the **super admin** view — the widest version of every screen, in the admin shell. Any other role sees a subset: possibly a different shell, and within it fewer nav links, fewer buttons, fewer row actions. Design against the super admin view, then verify each screen twice — as a `viewer` for the permission filtering, and once in the catalog shell for the layout itself.
+Logout is **not** a nav item. It lives in the topbar, next to the language switcher.
+`NAV_ITEMS` stays purely navigational — a Logout entry would be the one row in that
+array with no route and no permission, and the permission-strings rule depends on
+every row having both.
+
+### Reading the screenshots
+
+`docs/screens/` holds one image per screen. They are a **skeleton, not a spec.**
+
+Fixed — follow them: which screens exist and what is on each; the information
+architecture (sidebar order, table columns, form fields, where the primary action
+sits); and the overall shape of sidebar + topbar + content, cards on a light field.
+
+Not fixed — improve on them: spacing, proportion, typographic hierarchy, empty and
+loading states, and how filters, badges, row actions and pagination are presented.
+
+**Overridden entirely by this README**, wherever they disagree:
+
+- **Colour.** The screenshots are blue throughout. The accent is the red in the
+  token block. Never sample a colour from an image.
+- **Type scale, radius, spacing grid.** Ours, from the token block.
+- **Button shape.** The screenshots put a filled red Delete beside a filled blue
+  Edit on Product Details. Primary actions are filled; destructive actions are text
+  or icon, never filled.
+- **Decorative colour.** Each dashboard card gets its own tinted icon in the
+  screenshots. Green and amber are status only, and nothing else gets colour.
+
+They also show four things that no longer apply. The Users table has separate Type
+and Role columns — Type is gone, the role is the only source of truth. The Login
+screen has a Register link — there is no public registration; accounts are created
+from the Users screen by someone holding `users.create`. The Login screen also has
+Remember me and Forgot password, and the API has no endpoint behind either. And the
+sidebar carries a Logout item, which belongs in the topbar.
+
+Two more to correct as you build. Its permission counts read `x / 8`, which matches
+nothing: there are sixteen permissions over four resources, so a per-action column is
+out of four. And the expanded row shows only Products and Categories, where the
+matrix covers all four resources.
+
+The roles matrix is headed **Read**. Render **View** instead. A column header is a
+display label, not a key — the same split as `role` and `role_display_name` — so
+printing "Read" while sending `view` would be perfectly safe. Use "View" anyway, so
+the screen says what the API says and nobody has to carry two vocabularies for one
+concept.
+
+The roles list shows four roles where the seeder creates five. `super-admin` is
+listed like any other, with its edit and delete disabled: it is protected, which is
+not the same as hidden. Filtering it out would also put the list at odds with the
+dashboard's own role count.
+
+Where the two screenshots contradict each other, `Users.jpeg` shows edit, delete and
+no status toggle while `whole_design.jpeg` shows a toggle and no delete. The API has
+both `DELETE /api/users/{id}` and `PATCH /api/users/{id}/toggle-status`, each gated
+by its own permission, so the row carries both.
+
+Every screenshot shows the **super admin** view — the widest version of every screen,
+in the admin shell, with every table populated. Any other role sees a subset:
+possibly a different shell, and within it fewer nav links, fewer buttons, fewer row
+actions. And no screenshot shows a loading, empty, or error state, though all four
+states are required on every list. Design against the super admin view, then verify
+each screen twice — as a `viewer` for the permission filtering, and once in the
+catalog shell for the layout itself.
 
 ---
 
