@@ -3,7 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { ValidationErrorBody } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -12,13 +14,20 @@ import { UserPayload, UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-user-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, EmptyStateComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    TranslatePipe,
+  ],
   templateUrl: './user-form.component.html',
 })
 export class UserFormComponent implements OnInit {
   private readonly users = inject(UserService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   readonly id = input<string | undefined>(undefined);
 
@@ -43,7 +52,7 @@ export class UserFormComponent implements OnInit {
   });
 
   readonly isEdit = computed(() => this.userId() !== null);
-  readonly heading = computed(() => (this.isEdit() ? 'Edit user' : 'Add user'));
+  readonly headingKey = computed(() => (this.isEdit() ? 'users.editTitle' : 'users.addTitle'));
 
   ngOnInit(): void {
     this.users.roleOptions().subscribe({
@@ -117,7 +126,7 @@ export class UserFormComponent implements OnInit {
 
     request.subscribe({
       next: (user) => {
-        this.toast.show('success', `${user.name} was saved.`);
+        this.toast.show('success', this.locale.translate('users.saved', { name: user.name }));
         this.router.navigateByUrl('/users');
       },
       error: (error: HttpErrorResponse) => {
@@ -129,7 +138,7 @@ export class UserFormComponent implements OnInit {
 
   private applyServerError(error: HttpErrorResponse): void {
     if (error.status !== 422) {
-      this.formError.set('Could not save this user. Please try again.');
+      this.formError.set(this.locale.translate('users.saveFailed'));
 
       return;
     }
@@ -144,7 +153,7 @@ export class UserFormComponent implements OnInit {
     // The last-active-super-admin rules come back as a message with no field,
     // because no single input is at fault.
     if (Object.keys(errors).length === 0) {
-      this.formError.set(body?.message ?? 'Could not save this user.');
+      this.formError.set(body?.message ?? this.locale.translate('users.saveFailed'));
     }
   }
 
@@ -164,14 +173,14 @@ export class UserFormComponent implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'This field is required.';
+      return this.locale.translate('common.requiredField');
     }
 
     if (control.hasError('email')) {
-      return 'Enter a valid email address.';
+      return this.locale.translate('users.emailInvalid');
     }
 
-    return control.hasError('minlength') ? 'Use at least 8 characters.' : null;
+    return control.hasError('minlength') ? this.locale.translate('users.passwordMin') : null;
   }
 
   private clearServerErrors(): void {

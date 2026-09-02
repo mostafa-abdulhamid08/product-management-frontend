@@ -8,6 +8,10 @@ import { PaginationMeta } from '../../../core/models/api-response.model';
 })
 export class PaginationComponent {
   readonly meta = input.required<PaginationMeta>();
+  /** A translated template carrying {from}, {to} and {total}. */
+  readonly summary = input<string>('Showing {from} to {to} of {total}');
+  readonly previousLabel = input<string>('Previous page');
+  readonly nextLabel = input<string>('Next page');
   readonly pageChange = output<number>();
 
   readonly from = computed(() => (this.meta().total === 0 ? 0 : this.rangeStart()));
@@ -23,6 +27,13 @@ export class PaginationComponent {
 
     return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
   });
+
+  readonly summaryText = computed(() =>
+    this.summary()
+      .replaceAll('{from}', String(this.from()))
+      .replaceAll('{to}', String(this.to()))
+      .replaceAll('{total}', String(this.meta().total)),
+  );
 
   private rangeStart(): number {
     return (this.meta().current_page - 1) * this.meta().per_page + 1;

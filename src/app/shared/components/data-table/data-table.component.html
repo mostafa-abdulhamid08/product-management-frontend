@@ -1,13 +1,21 @@
 <div class="overflow-hidden rounded-md border border-border bg-surface">
   @if (loading()) {
-    <app-table-skeleton [rows]="skeletonRows()" [columns]="columns().length" />
+    <app-table-skeleton
+      [rows]="skeletonRows()"
+      [columns]="columns().length"
+      [loadingLabel]="loadingLabel()"
+    />
   } @else if (failed()) {
     <app-empty-state [heading]="errorHeading()" [message]="errorMessage()">
-      <button type="button" class="btn-primary" (click)="retry.emit()">Try again</button>
+      <button type="button" class="btn-primary" (click)="retry.emit()">
+        {{ retryLabel() }}
+      </button>
     </app-empty-state>
   } @else if (isEmpty() && filtered()) {
     <app-empty-state [heading]="filteredHeading()" [message]="filteredMessage()">
-      <button type="button" class="btn-quiet" (click)="clearFilters.emit()">Clear filters</button>
+      <button type="button" class="btn-quiet" (click)="clearFilters.emit()">
+        {{ clearFiltersLabel() }}
+      </button>
     </app-empty-state>
   } @else if (isEmpty()) {
     <app-empty-state [heading]="emptyHeading()" [message]="emptyMessage()">
@@ -35,7 +43,13 @@
     </div>
 
     @if (meta(); as pageMeta) {
-      <app-pagination [meta]="pageMeta" (pageChange)="pageChange.emit($event)" />
+      <app-pagination
+        [meta]="pageMeta"
+        [summary]="paginationSummary()"
+        [previousLabel]="previousLabel()"
+        [nextLabel]="nextLabel()"
+        (pageChange)="pageChange.emit($event)"
+      />
     }
   }
 </div>

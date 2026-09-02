@@ -1,4 +1,4 @@
-<app-page-header title="Dashboard" subtitle="Where the catalog stands today." />
+<app-page-header [title]="'dashboard.title' | t" [subtitle]="'dashboard.subtitle' | t" />
 
 @if (loading()) {
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
@@ -13,17 +13,17 @@
 } @else if (failed()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="Could not load the dashboard"
-      message="The request did not come back. It may be a connection problem."
+      [heading]="'dashboard.errorHeading' | t"
+      [message]="'common.loadFailed' | t"
     >
-      <button type="button" class="btn-primary" (click)="load()">Try again</button>
+      <button type="button" class="btn-primary" (click)="load()">{{ 'common.tryAgain' | t }}</button>
     </app-empty-state>
   </div>
 } @else {
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @for (card of cards(); track card.key) {
       <div class="rounded-md border border-border bg-surface p-5">
-        <p class="m-0 text-meta text-text-secondary">{{ card.label }}</p>
+        <p class="m-0 text-meta text-text-secondary">{{ card.labelKey ? (card.labelKey | t) : card.fallback }}</p>
         <p class="mt-2 mb-0 text-page-title font-semibold text-text tabular-nums">
           {{ card.value }}
         </p>
@@ -34,36 +34,36 @@
   @if (cards().length === 0) {
     <div class="rounded-md border border-border bg-surface">
       <app-empty-state
-        heading="Nothing to summarise yet"
-        message="Counts appear here for the resources you can view."
+        [heading]="'dashboard.noCards' | t"
+        [message]="'dashboard.noCardsMessage' | t"
       />
     </div>
   }
 
   <section *hasPermission="'products.view'" class="mt-6">
     <div class="mb-3 flex items-baseline justify-between gap-4">
-      <h2 class="m-0 text-section font-semibold text-text">Recent products</h2>
-      <a class="text-body text-primary underline-offset-2 hover:underline" routerLink="/products">
-        View all
+      <h2 class="m-0 text-section font-semibold text-text">{{ 'dashboard.recent' | t }}</h2>
+      <a class="rounded-sm text-body text-primary underline-offset-2 hover:underline active:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" routerLink="/products">
+        {{ 'dashboard.viewAll' | t }}
       </a>
     </div>
 
     <div class="overflow-hidden rounded-md border border-border bg-surface">
       @if (!hasRecent()) {
         <app-empty-state
-          heading="No products yet"
-          message="The five most recent ones will appear here."
+          [heading]="'dashboard.noRecent' | t"
+          [message]="'dashboard.noRecentMessage' | t"
         />
       } @else {
         <div class="overflow-x-auto">
           <table class="w-full border-collapse text-table">
             <thead>
               <tr class="border-b border-border text-meta text-text-secondary">
-                <th class="px-4 py-3 text-start font-medium">Product</th>
-                <th class="px-4 py-3 text-start font-medium">Category</th>
-                <th class="px-4 py-3 text-end font-medium">Price</th>
-                <th class="px-4 py-3 text-end font-medium">Stock</th>
-                <th class="w-28 px-4 py-3 text-start font-medium">Status</th>
+                <th class="px-4 py-3 text-start font-medium">{{ 'products.product' | t }}</th>
+                <th class="px-4 py-3 text-start font-medium">{{ 'products.category' | t }}</th>
+                <th class="px-4 py-3 text-end font-medium">{{ 'products.price' | t }}</th>
+                <th class="px-4 py-3 text-end font-medium">{{ 'products.stock' | t }}</th>
+                <th class="w-28 px-4 py-3 text-start font-medium">{{ 'common.status' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -71,7 +71,7 @@
                 <tr class="border-b border-border last:border-b-0 hover:bg-bg">
                   <td class="px-4 py-3">
                     <a
-                      class="text-text underline-offset-2 hover:text-primary hover:underline"
+                      class="rounded-sm text-text underline-offset-2 transition-colors hover:text-primary hover:underline active:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       [routerLink]="['/products', product.id]"
                     >
                       {{ product.name }}

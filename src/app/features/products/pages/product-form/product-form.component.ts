@@ -3,7 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { ValidationErrorBody } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -20,6 +22,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg'];
     RouterLink,
     PageHeaderComponent,
     EmptyStateComponent,
+    TranslatePipe,
   ],
   templateUrl: './product-form.component.html',
 })
@@ -27,6 +30,7 @@ export class ProductFormComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   /**
    * Present on the edit route only. One component serves both, so this is
@@ -71,7 +75,9 @@ export class ProductFormComponent implements OnInit {
   });
 
   readonly isEdit = computed(() => this.productId() !== null);
-  readonly heading = computed(() => (this.isEdit() ? 'Edit product' : 'Add product'));
+  readonly headingKey = computed(() =>
+    this.isEdit() ? 'products.editTitle' : 'products.addTitle',
+  );
 
   ngOnInit(): void {
     this.products.categoryOptions().subscribe({
@@ -127,14 +133,14 @@ export class ProductFormComponent implements OnInit {
     // The same two rules the backend enforces, so the user hears about it
     // before spending an upload. The server is still the authority.
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      this.imageError.set('Choose a PNG or JPG image.');
+      this.imageError.set(this.locale.translate('products.imageType'));
       input.value = '';
 
       return;
     }
 
     if (file.size > MAX_IMAGE_BYTES) {
-      this.imageError.set('That image is larger than 2 MB.');
+      this.imageError.set(this.locale.translate('products.imageTooLarge'));
       input.value = '';
 
       return;
@@ -182,7 +188,10 @@ export class ProductFormComponent implements OnInit {
 
     request.subscribe({
       next: (product) => {
-        this.toast.show('success', `${product.name} was saved.`);
+        this.toast.show(
+          'success',
+          this.locale.translate('products.saved', { name: product.name }),
+        );
         this.router.navigateByUrl(`/products/${product.id}`);
       },
       error: (error: HttpErrorResponse) => {
@@ -214,7 +223,7 @@ export class ProductFormComponent implements OnInit {
 
   private applyServerError(error: HttpErrorResponse): void {
     if (error.status !== 422) {
-      this.formError.set('Could not save this product. Please try again.');
+      this.formError.set(this.locale.translate('products.saveFailed'));
 
       return;
     }
@@ -233,7 +242,7 @@ export class ProductFormComponent implements OnInit {
     });
 
     if (Object.keys(errors).length === 0) {
-      this.formError.set(body?.message ?? 'Could not save this product.');
+      this.formError.set(body?.message ?? this.locale.translate('products.saveFailed'));
     }
   }
 
@@ -253,10 +262,10 @@ export class ProductFormComponent implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'This field is required.';
+      return this.locale.translate('common.requiredField');
     }
 
-    return control.hasError('min') ? 'Enter a value of 0 or more.' : null;
+    return control.hasError('min') ? this.locale.translate('products.minZero') : null;
   }
 
   private clearServerErrors(): void {

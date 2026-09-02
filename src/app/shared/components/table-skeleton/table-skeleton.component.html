@@ -1,5 +1,5 @@
 <div class="p-4" aria-busy="true" aria-live="polite">
-  <span class="sr-only">Loading…</span>
+  <span class="sr-only">{{ loadingLabel() }}</span>
   @for (row of rowList(); track row) {
     <div class="flex items-center gap-4 border-b border-border py-3 last:border-b-0">
       @for (column of columnList(); track column) {

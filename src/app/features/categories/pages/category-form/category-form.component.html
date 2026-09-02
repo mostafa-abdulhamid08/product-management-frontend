@@ -1,20 +1,20 @@
 @if (missing()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="That category does not exist"
-      message="It may have been deleted since this link was made."
+      [heading]="'categories.missingHeading' | t"
+      [message]="'categories.missingMessage' | t"
     >
-      <a class="btn-primary" routerLink="/categories">Back to categories</a>
+      <a class="btn-primary" routerLink="/categories">{{ 'categories.backToList' | t }}</a>
     </app-empty-state>
   </div>
 } @else {
-  <app-page-header [title]="heading()">
-    <a class="btn-quiet" routerLink="/categories">Cancel</a>
+  <app-page-header [title]="headingKey() | t">
+    <a class="btn-quiet" routerLink="/categories">{{ 'common.cancel' | t }}</a>
   </app-page-header>
 
   @if (loading()) {
     <div class="max-w-2xl rounded-md border border-border bg-surface p-6" aria-busy="true">
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only">{{ 'common.loading' | t }}</span>
       @for (line of [1, 2]; track line) {
         <div class="mb-4 h-9 w-full animate-pulse rounded-sm bg-border"></div>
       }
@@ -31,7 +31,7 @@
 
     <form class="max-w-2xl" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="rounded-md border border-border bg-surface p-6">
-        <label class="mb-1.5 block text-body font-medium text-text" for="name">Name</label>
+        <label class="mb-1.5 block text-body font-medium text-text" for="name">{{ 'common.name' | t }}</label>
         <input
           id="name"
           type="text"
@@ -44,7 +44,7 @@
         }
 
         <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="description">
-          Description
+          {{ 'common.description' | t }}
         </label>
         <textarea
           id="description"
@@ -59,9 +59,9 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        <a class="btn-quiet" routerLink="/categories">Cancel</a>
+        <a class="btn-quiet" routerLink="/categories">{{ 'common.cancel' | t }}</a>
         <button type="submit" class="btn-primary" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save category' }}
+          {{ saving() ? ('common.saving' | t) : ('categories.save' | t) }}
         </button>
       </div>
     </form>

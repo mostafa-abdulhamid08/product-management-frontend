@@ -158,42 +158,43 @@ work. Build it properly and copy its shape.
   complete and its Postman collection documents every response shape.
 - After completing any step, update the `## Current status
 
-**Steps 1-6 are done. Every screen in the build order exists.** Angular 19.2
-standalone, Tailwind 4.3, tokens in a `@theme` block in `src/styles.css` with the
-shared control classes.
+**All seven build-order steps are done. Nothing in `README.md` is unbuilt.**
 
 1-3: the two layouts and the `canMatch` skeleton; login, `AuthService` HTTP, the
-three interceptors, `restoreSession` in `provideAppInitializer`; the `hasPermission`
+interceptors, `restoreSession` in `provideAppInitializer`; the `hasPermission`
 directive and the permission-filtered sidebar.
 
-4-5: Products end to end; Categories, Users and Roles following its shape, with the
-API's business rules surfaced in its own words (category still holding products,
-role still assigned, self-deactivation, the protected `super-admin`).
+4-6: Products end to end; Categories, Users and Roles; `data-table` extracted and all
+four lists refactored onto it; the permission-driven Dashboard; real 403 and 404.
 
-6: **`data-table` extracted** and all four lists refactored onto it — it owns the
-card, the header row, the four states, and the pagination with its result count;
-features keep their filters, cell markup and row actions, passed in as a
-`<ng-template #row>`. **Dashboard** builds its cards from the keys the API returns,
-so a viewer sees two and a super admin four, with recent products priced through the
-price pipe. **Real 403 and 404 pages** in `features/errors/`, and
-`shared/components/placeholder-page/` is **deleted** — nothing references it.
+7: **i18n** — `public/i18n/en.json` and `ar.json`, the impure `t` pipe in
+`core/pipes/`, and a topbar switcher that reloads so one language shows at a time.
+`shared/` takes every label as an input, since it cannot import `core/`. **RTL** via
+logical utilities throughout, with `rtl:` variants for the few things that mirror by
+direction. **A global loading bar** — `ProgressService` counts in-flight HTTP
+(a counter, not a boolean) and watches router navigation, shows after 150ms, sits
+above modals in `--color-primary`; the dumb bar lives in `shared/`.
 
-One routing bug found and fixed while testing step 6: leaving the catch-all off the
-admin layout was not enough. An admin is authenticated, so they also match
-`catalogGuard`; an unmatched admin URL fell into the catalog shell's `**` and got a
-403 in the wrong shell. The catch-all now carries `catalogFallbackGuard`, which
-passes only for non-admins, so an admin's typo reaches the outer `**` as a truthful
-404. `ADMIN_PERMISSIONS` is declared once in `admin.guard.ts` and used by both.
+Verified in the browser against localhost:8000: the whole panel in English and in
+Arabic RTL, including the API's own status labels and role display names; the
+switcher round-tripping both ways with no mixed-language screen; the loading bar
+rendering at the top above the topbar; all four list states; and the interactive-state
+audit below.
 
-Verified in the browser against localhost:8000 after the refactor: all four lists
-unchanged, the filtered-empty state still distinct, prices in EGP; the dashboard with
-four cards as admin and two as `viewer@example.com`; `/prodcuts` as admin giving 404
-bare; `/users` as viewer giving 403 inside the catalog shell with the sidebar intact.
+Every shared control class carries default, hover, active, focus-visible and disabled
+(`.field` uses `focus:` rather than `focus-visible:`, which is right for a text
+input). The sweep after the `data-table` extraction found three gaps — the roles
+expand button, the roles column select-all, and the dashboard links had no
+focus-visible or active state — all now fixed.
 
-Not built: no i18n message files and no language switcher — `LocaleService` exists,
-defaults to `en`, and drives the `Accept-Language` header, but the UI's own strings
-are still English literals in templates. That is the last thing `README.md` describes
-which does not exist yet.
+Two things worth knowing before changing them: the `t` pipe is impure on purpose
+(its key never changes, so a pure pipe would never re-run when the locale does), and
+the language switch reloads on purpose (API-worded strings would otherwise stay in
+the previous language until each screen happened to refetch).
 
-Next: step 7 — a pass over empty, loading and error states across every list, then
-the localisation work if you want it.
+Only one seeded account is an admin. `viewer@example.com` and the other four demo
+accounts all use password `password`.
+
+Next: nothing outstanding. Candidates if you want them — Arabic copy review by a
+native speaker, a `docs/` note on adding a language, and tests whenever you lift the
+no-tests rule.

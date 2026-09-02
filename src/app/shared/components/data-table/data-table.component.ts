@@ -42,6 +42,12 @@ export class DataTableComponent<T extends { id: number }> {
   readonly filteredMessage = input('Try a different search, or clear the filters.');
   readonly errorHeading = input('Could not load this list');
   readonly errorMessage = input('The request did not come back. It may be a connection problem.');
+  readonly retryLabel = input('Try again');
+  readonly clearFiltersLabel = input('Clear filters');
+  readonly loadingLabel = input('Loading…');
+  readonly paginationSummary = input('Showing {from} to {to} of {total}');
+  readonly previousLabel = input('Previous page');
+  readonly nextLabel = input('Next page');
 
   readonly retry = output<void>();
   readonly clearFilters = output<void>();

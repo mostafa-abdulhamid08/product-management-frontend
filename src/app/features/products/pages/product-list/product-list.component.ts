@@ -1,11 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { PaginationMeta } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -28,7 +29,6 @@ import { ProductService } from '../../services/product.service';
 @Component({
   selector: 'app-product-list',
   imports: [
-    FormsModule,
     RouterLink,
     HasPermissionDirective,
     PageHeaderComponent,
@@ -36,12 +36,14 @@ import { ProductService } from '../../services/product.service';
     StatusBadgeComponent,
     ConfirmDialogComponent,
     PricePipe,
+    TranslatePipe,
   ],
   templateUrl: './product-list.component.html',
 })
 export class ProductListComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   private readonly searchInput = new Subject<string>();
 
@@ -57,15 +59,16 @@ export class ProductListComponent implements OnInit {
 
   readonly filtered = computed(() => hasActiveFilters(this.filters()));
 
-  readonly columns: DataTableColumn[] = [
-    { label: 'Image', width: 'w-16' },
-    { label: 'Product' },
-    { label: 'Category' },
-    { label: 'Price', align: 'end' },
-    { label: 'Stock', align: 'end' },
-    { label: 'Status' },
-    { label: 'Actions', align: 'end', width: 'w-28' },
-  ];
+  /** Computed, not static: switching language has to re-label the header. */
+  readonly columns = computed<DataTableColumn[]>(() => [
+    { label: this.locale.translate('products.image'), width: 'w-16' },
+    { label: this.locale.translate('products.product') },
+    { label: this.locale.translate('products.category') },
+    { label: this.locale.translate('products.price'), align: 'end' },
+    { label: this.locale.translate('products.stock'), align: 'end' },
+    { label: this.locale.translate('common.status') },
+    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-28' },
+  ]);
 
   constructor() {
     // Debouncing keystrokes is a stream. The result of it still lands in a signal.
@@ -140,7 +143,7 @@ export class ProductListComponent implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.pendingDelete.set(null);
-        this.toast.show('success', `${product.name} was deleted.`);
+        this.toast.show('success', this.locale.translate('products.deleted', { name: product.name }));
         this.afterDelete();
       },
       error: () => {

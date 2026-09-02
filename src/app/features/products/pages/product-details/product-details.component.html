@@ -1,6 +1,6 @@
 @if (loading()) {
   <div class="rounded-md border border-border bg-surface p-6" aria-busy="true">
-    <span class="sr-only">Loading…</span>
+    <span class="sr-only">{{ 'common.loading' | t }}</span>
     <div class="h-4 w-48 animate-pulse rounded-sm bg-border"></div>
     <div class="mt-6 flex gap-8">
       <div class="size-64 animate-pulse rounded-md bg-border"></div>
@@ -14,24 +14,27 @@
 } @else if (missing()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="That product does not exist"
-      message="It may have been deleted since this link was made."
+      [heading]="'products.missingHeading' | t"
+      [message]="'products.missingMessage' | t"
     >
-      <a class="btn-primary" routerLink="/products">Back to products</a>
+      <a class="btn-primary" routerLink="/products">{{ 'products.backToList' | t }}</a>
     </app-empty-state>
   </div>
 } @else if (failed()) {
   <div class="rounded-md border border-border bg-surface">
-    <app-empty-state heading="Could not load this product" message="The request did not come back.">
-      <button type="button" class="btn-primary" (click)="load()">Try again</button>
+    <app-empty-state
+      [heading]="'products.detailsError' | t"
+      [message]="'common.loadFailed' | t"
+    >
+      <button type="button" class="btn-primary" (click)="load()">{{ 'common.tryAgain' | t }}</button>
     </app-empty-state>
   </div>
 } @else {
   @if (product(); as item) {
   <app-page-header [title]="item.name" [subtitle]="item.category.name">
-    <a class="btn-quiet" routerLink="/products">Back</a>
+    <a class="btn-quiet" routerLink="/products">{{ 'common.back' | t }}</a>
     <a *hasPermission="'products.update'" class="btn-primary" [routerLink]="['/products', item.id, 'edit']">
-      Edit
+      {{ 'common.edit' | t }}
     </a>
     <button
       *hasPermission="'products.delete'"
@@ -39,7 +42,7 @@
       class="btn-danger-text"
       (click)="confirming.set(true)"
     >
-      Delete
+      {{ 'common.delete' | t }}
     </button>
   </app-page-header>
 
@@ -54,34 +57,34 @@
       <div
         class="flex size-64 items-center justify-center rounded-md border border-border bg-bg text-body text-text-muted"
       >
-        No image
+        {{ 'products.noImage' | t }}
       </div>
     }
 
     <dl class="m-0 grid min-w-72 flex-1 grid-cols-[auto_1fr] items-start gap-x-8 gap-y-3">
-      <dt class="text-body font-medium text-text-secondary">Category</dt>
+      <dt class="text-body font-medium text-text-secondary">{{ 'products.category' | t }}</dt>
       <dd class="m-0 text-body text-text">{{ item.category.name }}</dd>
 
-      <dt class="text-body font-medium text-text-secondary">Price</dt>
+      <dt class="text-body font-medium text-text-secondary">{{ 'products.price' | t }}</dt>
       <dd class="m-0 text-body text-text tabular-nums">{{ item.price | price }}</dd>
 
-      <dt class="text-body font-medium text-text-secondary">Stock</dt>
+      <dt class="text-body font-medium text-text-secondary">{{ 'products.stockQuantity' | t }}</dt>
       <dd class="m-0 text-body text-text tabular-nums">{{ item.stock }}</dd>
 
-      <dt class="text-body font-medium text-text-secondary">Status</dt>
+      <dt class="text-body font-medium text-text-secondary">{{ 'common.status' | t }}</dt>
       <dd class="m-0">
         <app-status-badge [active]="item.is_active" [label]="item.status_label" />
       </dd>
 
-      <dt class="text-body font-medium text-text-secondary">Description</dt>
-      <dd class="m-0 text-body text-text">{{ item.description || '—' }}</dd>
+      <dt class="text-body font-medium text-text-secondary">{{ 'common.description' | t }}</dt>
+      <dd class="m-0 text-body text-text">{{ item.description || ('common.none' | t) }}</dd>
 
-      <dt class="text-body font-medium text-text-secondary">Created</dt>
+      <dt class="text-body font-medium text-text-secondary">{{ 'common.created' | t }}</dt>
       <dd class="m-0 text-body text-text-secondary">
         {{ item.created_at | date: 'medium' }}
       </dd>
 
-      <dt class="text-body font-medium text-text-secondary">Updated</dt>
+      <dt class="text-body font-medium text-text-secondary">{{ 'common.updated' | t }}</dt>
       <dd class="m-0 text-body text-text-secondary">
         {{ item.updated_at | date: 'medium' }}
       </dd>
@@ -90,9 +93,11 @@
 
   @if (confirming()) {
     <app-confirm-dialog
-      heading="Delete this product?"
-      [message]="item.name + ' will be removed. This cannot be undone.'"
-      confirmLabel="Delete"
+      [heading]="'products.deleteHeading' | t"
+      [message]="'products.deleteMessage' | t: { name: item.name }"
+      [confirmLabel]="'common.delete' | t"
+      [cancelLabel]="'common.cancel' | t"
+      [busyLabel]="'common.working' | t"
       [busy]="deleting()"
       (confirmed)="confirmDelete()"
       (cancelled)="confirming.set(false)"

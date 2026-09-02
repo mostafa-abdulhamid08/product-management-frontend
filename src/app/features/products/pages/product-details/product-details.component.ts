@@ -3,6 +3,8 @@ import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -23,6 +25,7 @@ import { ProductService } from '../../services/product.service';
     EmptyStateComponent,
     ConfirmDialogComponent,
     PricePipe,
+    TranslatePipe,
   ],
   templateUrl: './product-details.component.html',
 })
@@ -30,6 +33,7 @@ export class ProductDetailsComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   /** Bound from the route parameter by withComponentInputBinding(). */
   readonly id = input<string | undefined>(undefined);
@@ -92,7 +96,10 @@ export class ProductDetailsComponent implements OnInit {
 
     this.products.delete(product.id).subscribe({
       next: () => {
-        this.toast.show('success', `${product.name} was deleted.`);
+        this.toast.show(
+          'success',
+          this.locale.translate('products.deleted', { name: product.name }),
+        );
         this.router.navigateByUrl('/products');
       },
       error: () => {

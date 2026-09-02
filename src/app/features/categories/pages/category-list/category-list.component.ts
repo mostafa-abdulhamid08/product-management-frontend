@@ -5,7 +5,9 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { PaginationMeta } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -29,12 +31,14 @@ import { CategoryService } from '../../services/category.service';
     PageHeaderComponent,
     DataTableComponent,
     ConfirmDialogComponent,
+    TranslatePipe,
   ],
   templateUrl: './category-list.component.html',
 })
 export class CategoryListComponent implements OnInit {
   private readonly categories = inject(CategoryService);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   private readonly searchInput = new Subject<string>();
 
@@ -49,12 +53,13 @@ export class CategoryListComponent implements OnInit {
 
   readonly filtered = computed(() => hasActiveCategoryFilters(this.filters()));
 
-  readonly columns: DataTableColumn[] = [
-    { label: 'Category' },
-    { label: 'Description' },
-    { label: 'Products', align: 'end', width: 'w-28' },
-    { label: 'Actions', align: 'end', width: 'w-24' },
-  ];
+  /** Computed, not static: switching language has to re-label the header. */
+  readonly columns = computed<DataTableColumn[]>(() => [
+    { label: this.locale.translate('categories.category') },
+    { label: this.locale.translate('common.description') },
+    { label: this.locale.translate('categories.productsCount'), align: 'end', width: 'w-28' },
+    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-24' },
+  ]);
 
   constructor() {
     this.searchInput
@@ -115,7 +120,10 @@ export class CategoryListComponent implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.pendingDelete.set(null);
-        this.toast.show('success', `${category.name} was deleted.`);
+        this.toast.show(
+          'success',
+          this.locale.translate('categories.deleted', { name: category.name }),
+        );
         this.afterDelete();
       },
       error: (error: HttpErrorResponse) => {
@@ -125,7 +133,10 @@ export class CategoryListComponent implements OnInit {
         // A category holding products cannot be deleted. That is a business
         // rule, and the API words it — show what it said rather than a guess.
         if (error.status === 422) {
-          this.toast.show('error', error.error?.message ?? 'That category could not be deleted.');
+          this.toast.show(
+            'error',
+            error.error?.message ?? this.locale.translate('categories.deleteFailed'),
+          );
         }
       },
     });

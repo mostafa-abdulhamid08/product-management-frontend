@@ -49,6 +49,8 @@ src/
 │   ├── core/                        singletons, loaded once
 │   │   ├── directives/
 │   │   │   └── has-permission.directive.ts
+│   │   ├── pipes/
+│   │   │   └── translate.pipe.ts     the `t` pipe — injects LocaleService
 │   │   ├── guards/
 │   │   │   ├── admin.guard.ts        canMatch — selects AdminLayout
 │   │   │   ├── catalog.guard.ts      canMatch — selects CatalogLayout
@@ -57,10 +59,12 @@ src/
 │   │   ├── interceptors/
 │   │   │   ├── credentials.interceptor.ts
 │   │   │   ├── error.interceptor.ts
-│   │   │   └── locale.interceptor.ts
+│   │   │   ├── locale.interceptor.ts
+│   │   │   └── progress.interceptor.ts
 │   │   ├── services/
 │   │   │   ├── auth.service.ts
 │   │   │   ├── locale.service.ts
+│   │   │   ├── progress.service.ts
 │   │   │   └── toast.service.ts
 │   │   └── models/
 │   │       ├── user.model.ts
@@ -98,6 +102,7 @@ src/
 │   │   │   ├── status-badge/
 │   │   │   ├── confirm-dialog/
 │   │   │   ├── empty-state/
+│   │   │   ├── progress-bar/
 │   │   │   ├── table-skeleton/
 │   │   │   └── toast-host/
 │   │   ├── pipes/
@@ -616,12 +621,36 @@ message arrives in English no matter what the UI is showing.
 
 ### The UI's own strings
 
-The API translates its messages, not our labels. The frontend needs its own
-translation files — `public/i18n/en.json` and `public/i18n/ar.json`, one per locale
-and keyed the same way — covering nav items, page titles, buttons, table headers,
-form labels, and the four list states. Nothing user-facing gets typed as a literal
-in a template. `LocaleService` holds the current locale as a signal and loads the
-matching file; `localeInterceptor` reads that same signal.
+The API translates its messages, not our labels. Ours live in
+`public/i18n/en.json` and `public/i18n/ar.json`, nested by screen and read with the
+`t` pipe:
+
+```html
+{{ 'products.title' | t }}
+{{ 'products.deleteMessage' | t: { name: product.name } }}
+```
+
+`LocaleService` holds the locale and the loaded messages as signals, and
+`localeInterceptor` reads the same locale. The messages load in the app initializer
+alongside the `/me` bootstrap, so nothing paints as a raw key.
+
+**The pipe is impure, deliberately.** Its input is the key, which never changes, so
+a pure pipe would never re-run when the *locale* does — and switching language has
+to re-render every label. The lookup is a walk down a plain object. It lives in
+`core/pipes/` for the same reason as `hasPermission`: it injects a core service.
+
+A missing key renders as the key itself rather than as blank, so a gap is obvious
+on screen instead of silently swallowing a label.
+
+**`shared/` cannot translate**, because it must not import `core/`. Every label a
+shared component shows is an input: `confirm-dialog` takes `confirmLabel`,
+`cancelLabel` and `busyLabel`; `pagination` takes a `summary` template carrying
+`{from}`, `{to}` and `{total}`; `data-table` takes all its state copy and passes the
+pagination labels down. Their defaults are English, so a forgotten binding shows
+English rather than nothing — every feature passes them explicitly.
+
+Column headers are a `computed`, not a static array, for the same reason the pipe is
+impure: switching language has to re-label the header.
 
 Two things stay untranslated on purpose:
 
@@ -637,21 +666,29 @@ Product and category names are user data and come back the same in both language
 
 ### The switcher
 
-A language switcher sits in the topbar, next to the user menu. Selecting a language
-updates the locale signal the interceptor reads, swaps the UI translation file, and
-sets `dir` on the document — `rtl` for Arabic, `ltr` for English. Because the
-locale is not stored server-side, the choice is a UI preference, held in the app and
-persisted for convenience only. That is not auth state, so the no-browser-storage
-rule does not apply to it.
+A language switcher sits in the topbar, beside the user's name. Selecting a language
+loads that message file, sets the locale signal the interceptor reads, sets `lang`
+and `dir` on the document, and persists the choice. The locale is not stored
+server-side, so this is a display preference rather than auth state and browser
+storage is fine for it — wrapped in try/catch, because a private window can throw.
 
-Switching language does not re-fetch every open screen automatically; already-loaded
-API messages keep the language they arrived in until their request is made again.
+**Switching reloads the page**, and that is the point rather than a shortcut. Our own
+labels re-render from the signal instantly, but everything the *API* worded — status
+labels, role display names, validation messages — arrived in the previous language
+and would sit there until each screen happened to refetch. The result is half a
+screen in each language. Reloading is blunt but it guarantees one language on screen
+at a time, and the choice is already persisted, so it survives the reload.
 
 RTL is a layout concern, not a translation one: the sidebar moves to the right, table
 columns and icon positions mirror, and anything positioned with a hardcoded `left`
-or `right` breaks. Prefer logical properties (`margin-inline-start`,
-`padding-inline-end`) over physical ones from the start — retrofitting them is much
-worse than writing them.
+or `right` breaks. Use logical utilities throughout — `ms-`/`me-`, `ps-`/`pe-`,
+`start-`/`end-`, `text-start`/`text-end`, `border-e` — and logical properties
+(`margin-inline-start`, `inset-inline`) in the few hand-written stylesheets.
+
+A handful of things mirror by direction rather than by position, and those use the
+`rtl:` variant: the logout arrow and the row-expand chevron flip with
+`rtl:-scale-x-100`, the toggle knob travels the other way with `rtl:-translate-x-4`,
+and the pagination chevrons swap glyphs.
 
 ---
 
@@ -731,6 +768,23 @@ produces font sizes. The names below are chosen to land in those namespaces, so
 - Target width 1280px. Tables must stay readable there without horizontal scroll.
 - Outline icons, one set throughout. 16px inline, 18px in the nav.
 - Sentence case everywhere. No ALL CAPS labels, no emoji.
+
+### The loading bar
+
+A 2px bar pinned to the top of the viewport in `--color-primary`, above every layer
+including modals and toasts.
+
+Two triggers, one bar: router navigation, so it covers a lazy chunk downloading, and
+in-flight HTTP through `progressInterceptor`. **HTTP is counted, not flagged** — with
+a boolean, two concurrent requests would hide the bar the moment the first finished
+while the second was still running. It appears only after about 150ms of activity,
+so a fast response never flashes it.
+
+It complements the table skeletons rather than replacing them. The bar says
+"something is happening"; the skeleton says "this table is filling in". Both stay.
+
+`ProgressService` (core) decides; `shared/components/progress-bar/` just renders what
+it is told, so `shared/` stays free of core.
 
 ### Every screen needs its states
 

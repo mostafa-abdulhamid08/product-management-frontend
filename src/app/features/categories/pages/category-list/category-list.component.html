@@ -1,6 +1,6 @@
-<app-page-header title="Categories" subtitle="How the catalog is grouped.">
+<app-page-header [title]="'categories.title' | t" [subtitle]="'categories.subtitle' | t">
   <a *hasPermission="'categories.create'" class="btn-primary" routerLink="/categories/create">
-    Add category
+    {{ 'categories.add' | t }}
   </a>
 </app-page-header>
 
@@ -8,30 +8,37 @@
   <input
     type="search"
     class="field max-w-80 flex-1"
-    placeholder="Search categories…"
-    aria-label="Search categories by name"
+    [placeholder]="'categories.searchPlaceholder' | t"
+    [attr.aria-label]="'categories.searchLabel' | t"
     [value]="filters().search"
     (input)="onSearch($any($event.target).value)"
   />
 
   @if (filtered()) {
-    <button type="button" class="btn-quiet" (click)="clearFilters()">Clear filters</button>
+    <button type="button" class="btn-quiet" (click)="clearFilters()">{{ 'common.clearFilters' | t }}</button>
   }
 </div>
 
 <app-data-table
   [rows]="rows()"
-  [columns]="columns"
+  [columns]="columns()"
   [meta]="meta()"
   [loading]="loading()"
   [failed]="failed()"
   [filtered]="filtered()"
   [skeletonRows]="6"
-  errorHeading="Could not load categories"
-  emptyHeading="No categories yet"
-  emptyMessage="Add the first one to get started."
-  filteredHeading="No categories match this search"
-  filteredMessage="Try a different term, or clear it to see everything."
+  [errorHeading]="'categories.errorHeading' | t"
+  [errorMessage]="'common.loadFailed' | t"
+  [emptyHeading]="'categories.emptyHeading' | t"
+  [emptyMessage]="'categories.emptyMessage' | t"
+  [filteredHeading]="'categories.filteredHeading' | t"
+  [filteredMessage]="'categories.filteredMessage' | t"
+  [retryLabel]="'common.tryAgain' | t"
+  [clearFiltersLabel]="'common.clearFilters' | t"
+  [loadingLabel]="'common.loading' | t"
+  [paginationSummary]="'common.paginationSummary' | t"
+  [previousLabel]="'common.previousPage' | t"
+  [nextLabel]="'common.nextPage' | t"
   (retry)="load()"
   (clearFilters)="clearFilters()"
   (pageChange)="onPage($event)"
@@ -42,13 +49,13 @@
     class="btn-primary"
     routerLink="/categories/create"
   >
-    Add category
+    {{ 'categories.add' | t }}
   </a>
 
   <ng-template #row let-category>
     <tr class="border-b border-border last:border-b-0 hover:bg-bg">
       <td class="px-4 py-3 text-text">{{ category.name }}</td>
-      <td class="px-4 py-3 text-text-secondary">{{ category.description || '—' }}</td>
+      <td class="px-4 py-3 text-text-secondary">{{ category.description || ('common.none' | t) }}</td>
       <td class="px-4 py-3 text-end text-text tabular-nums">{{ category.products_count }}</td>
       <td class="px-4 py-3">
         <div class="flex items-center justify-end gap-1">
@@ -56,7 +63,7 @@
             *hasPermission="'categories.update'"
             class="icon-btn"
             [routerLink]="['/categories', category.id, 'edit']"
-            [attr.aria-label]="'Edit ' + category.name"
+            [attr.aria-label]="'categories.editAria' | t: { name: category.name }"
           >
             <svg
               class="size-4"
@@ -77,7 +84,7 @@
             *hasPermission="'categories.delete'"
             type="button"
             class="icon-btn icon-btn-danger"
-            [attr.aria-label]="'Delete ' + category.name"
+            [attr.aria-label]="'categories.deleteAria' | t: { name: category.name }"
             (click)="askDelete(category)"
           >
             <svg
@@ -103,16 +110,15 @@
 
 @if (pendingDelete(); as category) {
   <app-confirm-dialog
-    heading="Delete this category?"
+    [heading]="'categories.deleteHeading' | t"
     [message]="
       category.products_count > 0
-        ? category.name +
-          ' holds ' +
-          category.products_count +
-          ' product(s). The server will refuse to delete it until they are moved.'
-        : category.name + ' will be removed. This cannot be undone.'
+        ? ('categories.deleteBlocked' | t: { name: category.name, count: category.products_count })
+        : ('categories.deleteMessage' | t: { name: category.name })
     "
-    confirmLabel="Delete"
+    [confirmLabel]="'common.delete' | t"
+    [cancelLabel]="'common.cancel' | t"
+    [busyLabel]="'common.working' | t"
     [busy]="deleting()"
     (confirmed)="confirmDelete()"
     (cancelled)="pendingDelete.set(null)"

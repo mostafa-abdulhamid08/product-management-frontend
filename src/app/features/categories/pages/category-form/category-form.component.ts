@@ -3,7 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { ValidationErrorBody } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -12,13 +14,20 @@ import { CategoryService } from '../../services/category.service';
 
 @Component({
   selector: 'app-category-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, EmptyStateComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    TranslatePipe,
+  ],
   templateUrl: './category-form.component.html',
 })
 export class CategoryFormComponent implements OnInit {
   private readonly categories = inject(CategoryService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   readonly id = input<string | undefined>(undefined);
 
@@ -39,7 +48,9 @@ export class CategoryFormComponent implements OnInit {
   });
 
   readonly isEdit = computed(() => this.categoryId() !== null);
-  readonly heading = computed(() => (this.isEdit() ? 'Edit category' : 'Add category'));
+  readonly headingKey = computed(() =>
+    this.isEdit() ? 'categories.editTitle' : 'categories.addTitle',
+  );
 
   ngOnInit(): void {
     if (!this.isEdit()) {
@@ -95,7 +106,10 @@ export class CategoryFormComponent implements OnInit {
 
     request.subscribe({
       next: (category) => {
-        this.toast.show('success', `${category.name} was saved.`);
+        this.toast.show(
+          'success',
+          this.locale.translate('categories.saved', { name: category.name }),
+        );
         this.router.navigateByUrl('/categories');
       },
       error: (error: HttpErrorResponse) => {
@@ -107,7 +121,7 @@ export class CategoryFormComponent implements OnInit {
 
   private applyServerError(error: HttpErrorResponse): void {
     if (error.status !== 422) {
-      this.formError.set('Could not save this category. Please try again.');
+      this.formError.set(this.locale.translate('categories.saveFailed'));
 
       return;
     }
@@ -120,7 +134,7 @@ export class CategoryFormComponent implements OnInit {
     });
 
     if (Object.keys(errors).length === 0) {
-      this.formError.set(body?.message ?? 'Could not save this category.');
+      this.formError.set(body?.message ?? this.locale.translate('categories.saveFailed'));
     }
   }
 
@@ -140,10 +154,10 @@ export class CategoryFormComponent implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'This field is required.';
+      return this.locale.translate('common.requiredField');
     }
 
-    return control.hasError('maxlength') ? 'Keep this under 255 characters.' : null;
+    return control.hasError('maxlength') ? this.locale.translate('common.maxLength') : null;
   }
 
   private clearServerErrors(): void {

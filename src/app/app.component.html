@@ -1,3 +1,9 @@
+<app-progress-bar [active]="loading()" />
+
 <router-outlet />
 
-<app-toast-host [toasts]="toasts()" (dismissed)="dismiss($event)" />
+<app-toast-host
+  [toasts]="toasts()"
+  [dismissLabel]="'common.dismiss' | t"
+  (dismissed)="dismiss($event)"
+/>

@@ -5,6 +5,7 @@ import { Component, computed, input } from '@angular/core';
   templateUrl: './table-skeleton.component.html',
 })
 export class TableSkeletonComponent {
+  readonly loadingLabel = input<string>('Loading…');
   readonly rows = input<number>(8);
   readonly columns = input<number>(5);
 

@@ -3,19 +3,22 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { AuthService } from '../../../core/services/auth.service';
+import { LocaleService } from '../../../core/services/locale.service';
 import { ValidationErrorBody } from '../../../core/models/api-response.model';
 
 type Field = 'email' | 'password';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly locale = inject(LocaleService);
 
   readonly form = inject(FormBuilder).nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -69,10 +72,12 @@ export class LoginComponent {
     }
 
     if (control.hasError('required')) {
-      return field === 'email' ? 'Email is required.' : 'Password is required.';
+      return this.locale.translate(
+        field === 'email' ? 'login.emailRequired' : 'login.passwordRequired',
+      );
     }
 
-    return control.hasError('email') ? 'Enter a valid email address.' : null;
+    return control.hasError('email') ? this.locale.translate('login.emailInvalid') : null;
   }
 
   private applyServerError(error: HttpErrorResponse): void {
@@ -85,7 +90,7 @@ export class LoginComponent {
       });
 
       if (Object.keys(errors).length === 0) {
-        this.formError.set(body?.message ?? 'Could not sign in.');
+        this.formError.set(body?.message ?? this.locale.translate('login.failed'));
       }
 
       return;
@@ -95,8 +100,8 @@ export class LoginComponent {
     // sending the visitor to /403, which they could not read anyway.
     this.formError.set(
       error.status === 403
-        ? (error.error?.message ?? 'This account has been deactivated.')
-        : 'Could not sign in. Please try again.',
+        ? (error.error?.message ?? this.locale.translate('login.deactivated'))
+        : this.locale.translate('login.failed'),
     );
   }
 

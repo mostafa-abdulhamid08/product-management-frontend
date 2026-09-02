@@ -1,29 +1,29 @@
 @if (missing()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="That role does not exist"
-      message="It may have been deleted since this link was made."
+      [heading]="'roles.missingHeading' | t"
+      [message]="'roles.missingMessage' | t"
     >
-      <a class="btn-primary" routerLink="/roles">Back to roles</a>
+      <a class="btn-primary" routerLink="/roles">{{ 'roles.backToList' | t }}</a>
     </app-empty-state>
   </div>
 } @else if (blocked()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="super-admin cannot be edited"
-      message="It is protected so that nobody can remove the permission that reaches this screen. Removing roles.update from it would lock everyone out with no way back."
+      [heading]="'roles.blockedHeading' | t"
+      [message]="'roles.blockedMessage' | t"
     >
-      <a class="btn-primary" routerLink="/roles">Back to roles</a>
+      <a class="btn-primary" routerLink="/roles">{{ 'roles.backToList' | t }}</a>
     </app-empty-state>
   </div>
 } @else {
-  <app-page-header [title]="heading()">
-    <a class="btn-quiet" routerLink="/roles">Cancel</a>
+  <app-page-header [title]="headingKey() | t">
+    <a class="btn-quiet" routerLink="/roles">{{ 'common.cancel' | t }}</a>
   </app-page-header>
 
   @if (loading()) {
     <div class="rounded-md border border-border bg-surface p-6" aria-busy="true">
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only">{{ 'common.loading' | t }}</span>
       @for (line of [1, 2, 3, 4, 5]; track line) {
         <div class="mb-4 h-9 w-full max-w-md animate-pulse rounded-sm bg-border"></div>
       }
@@ -41,12 +41,12 @@
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="grid gap-6 lg:grid-cols-[22rem_1fr]">
         <div class="rounded-md border border-border bg-surface p-6">
-          <label class="mb-1.5 block text-body font-medium text-text" for="name">Name</label>
+          <label class="mb-1.5 block text-body font-medium text-text" for="name">{{ 'common.name' | t }}</label>
           <input
             id="name"
             type="text"
             class="field"
-            placeholder="e.g. warehouse-staff"
+            [placeholder]="'roles.namePlaceholder' | t"
             formControlName="name"
             [class.field-invalid]="fieldError('name')"
           />
@@ -54,12 +54,12 @@
             <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
           } @else {
             <p class="mt-1.5 text-meta text-text-muted">
-              This is the key the API matches on. Lower case, no spaces.
+              {{ 'roles.nameHint' | t }}
             </p>
           }
 
           <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="description">
-            Description
+            {{ 'common.description' | t }}
           </label>
           <textarea
             id="description"
@@ -75,9 +75,9 @@
 
         <div class="rounded-md border border-border bg-surface p-6">
           <div class="mb-4 flex items-baseline justify-between gap-4">
-            <p class="m-0 text-body font-medium text-text">Permissions</p>
+            <p class="m-0 text-body font-medium text-text">{{ 'roles.permissions' | t }}</p>
             <p class="m-0 text-meta text-text-muted tabular-nums">
-              {{ selectedCount() }} / {{ totalCount() }} selected
+              {{ 'roles.selectedCount' | t: { selected: selectedCount(), total: totalCount() } }}
             </p>
           </div>
 
@@ -85,26 +85,26 @@
             <table class="w-full border-collapse text-table">
               <thead>
                 <tr class="text-meta text-text-secondary">
-                  <th class="py-2 text-start font-medium">Resource</th>
+                  <th class="py-2 text-start font-medium">{{ 'roles.resource' | t }}</th>
                   @for (action of actions(); track action) {
                     <th class="w-24 py-2 text-center font-medium">
                       <button
                         type="button"
-                        class="cursor-pointer border-0 bg-transparent p-0 capitalize underline-offset-2 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        [attr.aria-label]="'Toggle ' + action + ' for every resource'"
+                        class="cursor-pointer rounded-sm border-0 bg-transparent p-0 underline-offset-2 transition-colors hover:text-primary hover:underline active:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        [attr.aria-label]="'roles.toggleColumn' | t: { action: actionLabel(action) }"
                         (click)="toggleColumn(action)"
                       >
-                        {{ action }}
+                        {{ actionLabel(action) }}
                       </button>
                     </th>
                   }
-                  <th class="w-16 py-2 text-center font-medium">All</th>
+                  <th class="w-16 py-2 text-center font-medium">{{ 'roles.all' | t }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (resource of resources(); track resource) {
                   <tr class="border-t border-border">
-                    <td class="py-2.5 text-text capitalize">{{ resource }}</td>
+                    <td class="py-2.5 text-text">{{ resourceLabel(resource) }}</td>
 
                     @for (action of actions(); track action) {
                       <td class="py-2.5 text-center">
@@ -112,7 +112,7 @@
                           type="checkbox"
                           class="size-4 accent-primary"
                           [checked]="isChecked(resource, action)"
-                          [attr.aria-label]="resource + ' ' + action"
+                          [attr.aria-label]="resourceLabel(resource) + ' ' + actionLabel(action)"
                           (change)="toggle(resource, action)"
                         />
                       </td>
@@ -123,7 +123,7 @@
                         type="checkbox"
                         class="size-4 accent-primary"
                         [checked]="isRowFull(resource)"
-                        [attr.aria-label]="'Toggle every action for ' + resource"
+                        [attr.aria-label]="'roles.toggleRow' | t: { resource: resourceLabel(resource) }"
                         (change)="toggleRow(resource)"
                       />
                     </td>
@@ -134,16 +134,15 @@
           </div>
 
           <p class="mt-4 mb-0 text-meta text-text-muted">
-            Hiding a control is UX. What actually stops someone is this list, enforced on every
-            API route.
+            {{ 'roles.footnote' | t }}
           </p>
         </div>
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        <a class="btn-quiet" routerLink="/roles">Cancel</a>
+        <a class="btn-quiet" routerLink="/roles">{{ 'common.cancel' | t }}</a>
         <button type="submit" class="btn-primary" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save role' }}
+          {{ saving() ? ('common.saving' | t) : ('roles.save' | t) }}
         </button>
       </div>
     </form>

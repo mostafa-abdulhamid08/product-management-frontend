@@ -1,6 +1,6 @@
-<app-page-header title="Products" subtitle="Everything in the catalog.">
+<app-page-header [title]="'products.title' | t" [subtitle]="'products.subtitle' | t">
   <a *hasPermission="'products.create'" class="btn-primary" routerLink="/products/create">
-    Add product
+    {{ 'products.add' | t }}
   </a>
 </app-page-header>
 
@@ -8,19 +8,19 @@
   <input
     type="search"
     class="field max-w-80 flex-1"
-    placeholder="Search products…"
-    aria-label="Search products by name"
+    [placeholder]="'products.searchPlaceholder' | t"
+    [attr.aria-label]="'products.searchLabel' | t"
     [value]="filters().search"
     (input)="onSearch($any($event.target).value)"
   />
 
   <select
     class="field w-48"
-    aria-label="Filter by category"
+    [attr.aria-label]="'products.filterCategory' | t"
     [value]="filters().category_id ?? ''"
     (change)="onCategory($any($event.target).value)"
   >
-    <option value="">All categories</option>
+    <option value="">{{ 'products.allCategories' | t }}</option>
     @for (category of categories(); track category.id) {
       <option [value]="category.id">{{ category.name }}</option>
     }
@@ -28,32 +28,39 @@
 
   <select
     class="field w-40"
-    aria-label="Filter by status"
+    [attr.aria-label]="'products.filterStatus' | t"
     [value]="filters().status ?? ''"
     (change)="onStatus($any($event.target).value)"
   >
-    <option value="">All statuses</option>
-    <option value="active">Active</option>
-    <option value="inactive">Inactive</option>
+    <option value="">{{ 'common.allStatuses' | t }}</option>
+    <option value="active">{{ 'common.active' | t }}</option>
+    <option value="inactive">{{ 'common.inactive' | t }}</option>
   </select>
 
   @if (filtered()) {
-    <button type="button" class="btn-quiet" (click)="clearFilters()">Clear filters</button>
+    <button type="button" class="btn-quiet" (click)="clearFilters()">{{ 'common.clearFilters' | t }}</button>
   }
 </div>
 
 <app-data-table
   [rows]="rows()"
-  [columns]="columns"
+  [columns]="columns()"
   [meta]="meta()"
   [loading]="loading()"
   [failed]="failed()"
   [filtered]="filtered()"
-  errorHeading="Could not load products"
-  emptyHeading="No products yet"
-  emptyMessage="Add the first one to get started."
-  filteredHeading="No products match these filters"
-  filteredMessage="Try a different search term, or clear the filters to see everything."
+  [errorHeading]="'products.errorHeading' | t"
+  [errorMessage]="'common.loadFailed' | t"
+  [emptyHeading]="'products.emptyHeading' | t"
+  [emptyMessage]="'products.emptyMessage' | t"
+  [filteredHeading]="'products.filteredHeading' | t"
+  [filteredMessage]="'products.filteredMessage' | t"
+  [retryLabel]="'common.tryAgain' | t"
+  [clearFiltersLabel]="'common.clearFilters' | t"
+  [loadingLabel]="'common.loading' | t"
+  [paginationSummary]="'common.paginationSummary' | t"
+  [previousLabel]="'common.previousPage' | t"
+  [nextLabel]="'common.nextPage' | t"
   (retry)="load()"
   (clearFilters)="clearFilters()"
   (pageChange)="onPage($event)"
@@ -64,7 +71,7 @@
     class="btn-primary"
     routerLink="/products/create"
   >
-    Add product
+    {{ 'products.add' | t }}
   </a>
 
   <ng-template #row let-product>
@@ -97,7 +104,7 @@
           <a
             class="icon-btn"
             [routerLink]="['/products', product.id]"
-            [attr.aria-label]="'View ' + product.name"
+            [attr.aria-label]="'products.view' | t: { name: product.name }"
           >
             <svg
               class="size-4"
@@ -118,7 +125,7 @@
             *hasPermission="'products.update'"
             class="icon-btn"
             [routerLink]="['/products', product.id, 'edit']"
-            [attr.aria-label]="'Edit ' + product.name"
+            [attr.aria-label]="'products.editAria' | t: { name: product.name }"
           >
             <svg
               class="size-4"
@@ -139,7 +146,7 @@
             *hasPermission="'products.delete'"
             type="button"
             class="icon-btn icon-btn-danger"
-            [attr.aria-label]="'Delete ' + product.name"
+            [attr.aria-label]="'products.deleteAria' | t: { name: product.name }"
             (click)="askDelete(product)"
           >
             <svg
@@ -165,9 +172,11 @@
 
 @if (pendingDelete(); as product) {
   <app-confirm-dialog
-    heading="Delete this product?"
-    [message]="product.name + ' will be removed. This cannot be undone.'"
-    confirmLabel="Delete"
+    [heading]="'products.deleteHeading' | t"
+    [message]="'products.deleteMessage' | t: { name: product.name }"
+    [confirmLabel]="'common.delete' | t"
+    [cancelLabel]="'common.cancel' | t"
+    [busyLabel]="'common.working' | t"
     [busy]="deleting()"
     (confirmed)="confirmDelete()"
     (cancelled)="pendingDelete.set(null)"

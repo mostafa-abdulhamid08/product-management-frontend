@@ -5,6 +5,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 
 import { CSRF_RETRIED, SKIP_AUTH_REDIRECT, SKIP_FORBIDDEN_REDIRECT } from '../http-context';
 import { AuthService } from '../services/auth.service';
+import { LocaleService } from '../services/locale.service';
 import { ToastService } from '../services/toast.service';
 
 function readCookie(name: string): string | null {
@@ -18,6 +19,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const toast = inject(ToastService);
   const http = inject(HttpClient);
+  const locale = inject(LocaleService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -49,7 +51,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       if (error.status >= 500) {
-        toast.show('error', 'Something went wrong. Please try again.');
+        toast.show('error', locale.translate('common.genericError'));
       }
 
       return throwError(() => error);

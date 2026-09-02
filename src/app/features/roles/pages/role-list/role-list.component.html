@@ -1,5 +1,5 @@
-<app-page-header title="Roles" subtitle="What each role is allowed to do.">
-  <a *hasPermission="'roles.create'" class="btn-primary" routerLink="/roles/create">Add role</a>
+<app-page-header [title]="'roles.title' | t" [subtitle]="'roles.subtitle' | t">
+  <a *hasPermission="'roles.create'" class="btn-primary" routerLink="/roles/create">{{ 'roles.add' | t }}</a>
 </app-page-header>
 
 <app-data-table
@@ -9,14 +9,20 @@
   [loading]="loading()"
   [failed]="failed()"
   [skeletonRows]="5"
-  errorHeading="Could not load roles"
-  emptyHeading="No roles yet"
-  emptyMessage="Add the first one to get started."
+  [errorHeading]="'roles.errorHeading' | t"
+  [errorMessage]="'common.loadFailed' | t"
+  [emptyHeading]="'roles.emptyHeading' | t"
+  [emptyMessage]="'roles.emptyMessage' | t"
+  [retryLabel]="'common.tryAgain' | t"
+  [loadingLabel]="'common.loading' | t"
+  [paginationSummary]="'common.paginationSummary' | t"
+  [previousLabel]="'common.previousPage' | t"
+  [nextLabel]="'common.nextPage' | t"
   (retry)="load()"
   (pageChange)="onPage($event)"
 >
   <a *hasPermission="'roles.create'" emptyAction class="btn-primary" routerLink="/roles/create">
-    Add role
+    {{ 'roles.add' | t }}
   </a>
 
   <ng-template #row let-role>
@@ -24,13 +30,14 @@
       <td class="px-4 py-3">
         <button
           type="button"
-          class="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-start"
+          class="flex cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent p-0 text-start transition-colors hover:text-primary active:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           [attr.aria-expanded]="expandedId() === role.id"
           (click)="toggleExpanded(role)"
         >
           <svg
-            class="size-4 shrink-0 text-text-muted transition-transform"
+            class="size-4 shrink-0 text-text-muted transition-transform rtl:-scale-x-100"
             [class.rotate-90]="expandedId() === role.id"
+            
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -68,8 +75,8 @@
             [attr.aria-disabled]="isProtected(role)"
             [attr.tabindex]="isProtected(role) ? -1 : null"
             [routerLink]="isProtected(role) ? null : ['/roles', role.id, 'edit']"
-            [attr.aria-label]="'Edit ' + role.display_name"
-            [title]="isProtected(role) ? 'super-admin cannot be edited.' : ''"
+            [attr.aria-label]="'roles.editAria' | t: { name: role.display_name }"
+            [title]="isProtected(role) ? ('roles.protectedEdit' | t) : ''"
           >
             <svg
               class="size-4"
@@ -91,8 +98,8 @@
             type="button"
             class="icon-btn icon-btn-danger"
             [disabled]="isProtected(role)"
-            [attr.aria-label]="'Delete ' + role.display_name"
-            [title]="isProtected(role) ? 'super-admin cannot be deleted.' : ''"
+            [attr.aria-label]="'roles.deleteAria' | t: { name: role.display_name }"
+            [title]="isProtected(role) ? ('roles.protectedDelete' | t) : ''"
             (click)="askDelete(role)"
           >
             <svg
@@ -120,22 +127,22 @@
           <table class="w-full max-w-2xl border-collapse text-table">
             <thead>
               <tr class="text-meta text-text-secondary">
-                <th class="py-2 text-start font-medium">Resource</th>
+                <th class="py-2 text-start font-medium">{{ 'roles.resource' | t }}</th>
                 @for (action of actions(); track action) {
-                  <th class="w-20 py-2 text-center font-medium capitalize">{{ action }}</th>
+                  <th class="w-20 py-2 text-center font-medium">{{ actionLabel(action) }}</th>
                 }
               </tr>
             </thead>
             <tbody>
               @for (resource of resources(); track resource) {
                 <tr class="border-t border-border">
-                  <td class="py-2 text-text capitalize">{{ resource }}</td>
+                  <td class="py-2 text-text">{{ resourceLabel(resource) }}</td>
                   @for (action of actions(); track action) {
                     <td class="py-2 text-center">
                       @if (has(role, resource, action)) {
-                        <span class="text-success" aria-label="Allowed">✓</span>
+                        <span class="text-success" [attr.aria-label]="'roles.allowed' | t">✓</span>
                       } @else {
-                        <span class="text-text-muted" aria-label="Not allowed">—</span>
+                        <span class="text-text-muted" [attr.aria-label]="'roles.notAllowed' | t">—</span>
                       }
                     </td>
                   }
@@ -151,16 +158,15 @@
 
 @if (pendingDelete(); as role) {
   <app-confirm-dialog
-    heading="Delete this role?"
+    [heading]="'roles.deleteHeading' | t"
     [message]="
       role.users_count > 0
-        ? role.display_name +
-          ' is assigned to ' +
-          role.users_count +
-          ' user(s). The server will refuse to delete it until they are reassigned.'
-        : role.display_name + ' will be removed. This cannot be undone.'
+        ? ('roles.deleteBlocked' | t: { name: role.display_name, count: role.users_count })
+        : ('roles.deleteMessage' | t: { name: role.display_name })
     "
-    confirmLabel="Delete"
+    [confirmLabel]="'common.delete' | t"
+    [cancelLabel]="'common.cancel' | t"
+    [busyLabel]="'common.working' | t"
     [busy]="deleting()"
     (confirmed)="confirmDelete()"
     (cancelled)="pendingDelete.set(null)"

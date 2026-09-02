@@ -1,20 +1,20 @@
 @if (missing()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="That product does not exist"
-      message="It may have been deleted since this link was made."
+      [heading]="'products.missingHeading' | t"
+      [message]="'products.missingMessage' | t"
     >
-      <a class="btn-primary" routerLink="/products">Back to products</a>
+      <a class="btn-primary" routerLink="/products">{{ 'products.backToList' | t }}</a>
     </app-empty-state>
   </div>
 } @else {
-  <app-page-header [title]="heading()">
-    <a class="btn-quiet" routerLink="/products">Cancel</a>
+  <app-page-header [title]="headingKey() | t">
+    <a class="btn-quiet" routerLink="/products">{{ 'common.cancel' | t }}</a>
   </app-page-header>
 
   @if (loading()) {
     <div class="rounded-md border border-border bg-surface p-6" aria-busy="true">
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only">{{ 'common.loading' | t }}</span>
       @for (line of [1, 2, 3, 4, 5]; track line) {
         <div class="mb-4 h-9 w-full max-w-md animate-pulse rounded-sm bg-border"></div>
       }
@@ -32,7 +32,7 @@
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div class="rounded-md border border-border bg-surface p-6">
-          <label class="mb-1.5 block text-body font-medium text-text" for="name">Name</label>
+          <label class="mb-1.5 block text-body font-medium text-text" for="name">{{ 'common.name' | t }}</label>
           <input
             id="name"
             type="text"
@@ -45,7 +45,7 @@
           }
 
           <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="description">
-            Description
+            {{ 'common.description' | t }}
           </label>
           <textarea
             id="description"
@@ -60,7 +60,7 @@
 
           <div class="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
-              <label class="mb-1.5 block text-body font-medium text-text" for="price">Price</label>
+              <label class="mb-1.5 block text-body font-medium text-text" for="price">{{ 'products.price' | t }}</label>
               <input
                 id="price"
                 type="number"
@@ -76,7 +76,7 @@
             </div>
 
             <div>
-              <label class="mb-1.5 block text-body font-medium text-text" for="stock">Stock</label>
+              <label class="mb-1.5 block text-body font-medium text-text" for="stock">{{ 'products.stockQuantity' | t }}</label>
               <input
                 id="stock"
                 type="number"
@@ -92,7 +92,7 @@
           </div>
 
           <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="category_id">
-            Category
+            {{ 'products.category' | t }}
           </label>
           <select
             id="category_id"
@@ -100,7 +100,7 @@
             formControlName="category_id"
             [class.field-invalid]="fieldError('category_id')"
           >
-            <option value="">Select a category</option>
+            <option value="">{{ 'products.selectCategory' | t }}</option>
             @for (category of categories(); track category.id) {
               <option [value]="category.id">{{ category.name }}</option>
             }
@@ -111,12 +111,12 @@
 
           <label class="mt-5 flex items-center gap-2.5 text-body text-text">
             <input type="checkbox" class="size-4 accent-primary" formControlName="is_active" />
-            Active
+            {{ 'products.activeLabel' | t }}
           </label>
         </div>
 
         <div class="rounded-md border border-border bg-surface p-6">
-          <p class="m-0 mb-1.5 text-body font-medium text-text">Image</p>
+          <p class="m-0 mb-1.5 text-body font-medium text-text">{{ 'products.image' | t }}</p>
 
           @if (previewSrc(); as src) {
             <img
@@ -128,7 +128,7 @@
             <div
               class="mb-3 flex aspect-square w-full items-center justify-center rounded-md border border-dashed border-border bg-bg text-body text-text-muted"
             >
-              No image
+              {{ 'products.noImage' | t }}
             </div>
           }
 
@@ -136,7 +136,7 @@
             type="file"
             accept="image/png,image/jpeg"
             class="field h-auto py-1.5 file:me-3 file:rounded-sm file:border-0 file:bg-bg file:px-3 file:py-1 file:text-body file:text-text-secondary"
-            aria-label="Product image"
+            [attr.aria-label]="'products.imageLabel' | t"
             [class.field-invalid]="imageError()"
             (change)="onImage($event)"
           />
@@ -144,21 +144,21 @@
           @if (imageError(); as message) {
             <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
           } @else {
-            <p class="mt-1.5 text-meta text-text-muted">PNG or JPG, up to 2 MB.</p>
+            <p class="mt-1.5 text-meta text-text-muted">{{ 'products.imageHint' | t }}</p>
           }
 
           @if (imageFile()) {
             <button type="button" class="btn-quiet mt-3 w-full" (click)="clearImage()">
-              Remove selected image
+              {{ 'products.removeImage' | t }}
             </button>
           }
         </div>
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        <a class="btn-quiet" routerLink="/products">Cancel</a>
+        <a class="btn-quiet" routerLink="/products">{{ 'common.cancel' | t }}</a>
         <button type="submit" class="btn-primary" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save product' }}
+          {{ saving() ? ('common.saving' | t) : ('products.save' | t) }}
         </button>
       </div>
     </form>

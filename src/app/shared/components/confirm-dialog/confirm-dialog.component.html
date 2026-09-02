@@ -15,10 +15,10 @@
 
     <div class="mt-6 flex justify-end gap-2">
       <button type="button" class="btn-quiet" [disabled]="busy()" (click)="cancelled.emit()">
-        Cancel
+        {{ cancelLabel() }}
       </button>
       <button type="button" class="btn-danger-text" [disabled]="busy()" (click)="confirmed.emit()">
-        {{ busy() ? 'Working…' : confirmLabel() }}
+        {{ busy() ? busyLabel() : confirmLabel() }}
       </button>
     </div>
   </div>

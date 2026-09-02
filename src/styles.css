@@ -97,7 +97,7 @@ body {
 
   .toggle {
     @apply relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full border-0 bg-border p-0 transition-colors;
-    @apply hover:bg-text-muted;
+    @apply hover:bg-text-muted active:opacity-80;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
     @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-border;
   }
@@ -111,7 +111,7 @@ body {
   }
 
   .toggle.is-on .toggle-knob {
-    @apply translate-x-4;
+    @apply translate-x-4 rtl:-translate-x-4;
   }
 
   .page-btn {

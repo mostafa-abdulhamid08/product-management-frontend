@@ -26,16 +26,13 @@ export interface DashboardStats {
 
 export interface StatCard {
   key: string;
-  label: string;
+  /** A message key. An unknown resource falls back to its own name. */
+  labelKey: string;
+  fallback: string;
   value: number;
 }
 
-const LABELS: Record<string, string> = {
-  products: 'Products',
-  categories: 'Categories',
-  users: 'Users',
-  roles: 'Roles',
-};
+const KNOWN = ['products', 'categories', 'users', 'roles'];
 
 /** Unknown keys still render, so a new backend resource needs no change here. */
 export function toCards(stats: DashboardStats): StatCard[] {
@@ -43,7 +40,8 @@ export function toCards(stats: DashboardStats): StatCard[] {
     .filter(([key, value]) => key !== 'recent_products' && typeof value === 'number')
     .map(([key, value]) => ({
       key,
-      label: LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1),
+      labelKey: KNOWN.includes(key) ? `dashboard.cards.${key}` : '',
+      fallback: key.charAt(0).toUpperCase() + key.slice(1),
       value: value as number,
     }));
 }

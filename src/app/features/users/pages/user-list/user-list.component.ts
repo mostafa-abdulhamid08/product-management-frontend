@@ -5,7 +5,9 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { PaginationMeta } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -34,6 +36,7 @@ import { UserService } from '../../services/user.service';
     DataTableComponent,
     StatusBadgeComponent,
     ConfirmDialogComponent,
+    TranslatePipe,
   ],
   templateUrl: './user-list.component.html',
 })
@@ -41,6 +44,7 @@ export class UserListComponent implements OnInit {
   private readonly users = inject(UserService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   private readonly searchInput = new Subject<string>();
 
@@ -57,13 +61,14 @@ export class UserListComponent implements OnInit {
 
   readonly filtered = computed(() => hasActiveUserFilters(this.filters()));
 
-  readonly columns: DataTableColumn[] = [
-    { label: 'Name' },
-    { label: 'Email' },
-    { label: 'Role' },
-    { label: 'Status', width: 'w-28' },
-    { label: 'Actions', align: 'end', width: 'w-36' },
-  ];
+  /** Computed, not static: switching language has to re-label the header. */
+  readonly columns = computed<DataTableColumn[]>(() => [
+    { label: this.locale.translate('common.name') },
+    { label: this.locale.translate('common.email') },
+    { label: this.locale.translate('common.role') },
+    { label: this.locale.translate('common.status'), width: 'w-28' },
+    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-36' },
+  ]);
 
   /** The backend refuses these too; hiding them first saves a pointless 422. */
   private readonly currentUserId = computed(() => this.auth.user()?.id ?? null);
@@ -144,7 +149,10 @@ export class UserListComponent implements OnInit {
         // Self-protection rules: you cannot deactivate yourself, and the last
         // active super admin cannot be switched off. The row stays as it was.
         if (error.status === 422) {
-          this.toast.show('error', error.error?.message ?? 'That change was refused.');
+          this.toast.show(
+            'error',
+            error.error?.message ?? this.locale.translate('users.toggleRefused'),
+          );
         }
       },
     });
@@ -167,7 +175,7 @@ export class UserListComponent implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.pendingDelete.set(null);
-        this.toast.show('success', `${user.name} was deleted.`);
+        this.toast.show('success', this.locale.translate('users.deleted', { name: user.name }));
         this.afterDelete();
       },
       error: (error: HttpErrorResponse) => {
@@ -175,7 +183,10 @@ export class UserListComponent implements OnInit {
         this.pendingDelete.set(null);
 
         if (error.status === 422) {
-          this.toast.show('error', error.error?.message ?? 'That user could not be deleted.');
+          this.toast.show(
+            'error',
+            error.error?.message ?? this.locale.translate('users.deleteFailed'),
+          );
         }
       },
     });

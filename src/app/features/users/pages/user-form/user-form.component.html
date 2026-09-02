@@ -1,20 +1,20 @@
 @if (missing()) {
   <div class="rounded-md border border-border bg-surface">
     <app-empty-state
-      heading="That user does not exist"
-      message="They may have been deleted since this link was made."
+      [heading]="'users.missingHeading' | t"
+      [message]="'users.missingMessage' | t"
     >
-      <a class="btn-primary" routerLink="/users">Back to users</a>
+      <a class="btn-primary" routerLink="/users">{{ 'users.backToList' | t }}</a>
     </app-empty-state>
   </div>
 } @else {
-  <app-page-header [title]="heading()">
-    <a class="btn-quiet" routerLink="/users">Cancel</a>
+  <app-page-header [title]="headingKey() | t">
+    <a class="btn-quiet" routerLink="/users">{{ 'common.cancel' | t }}</a>
   </app-page-header>
 
   @if (loading()) {
     <div class="max-w-2xl rounded-md border border-border bg-surface p-6" aria-busy="true">
-      <span class="sr-only">Loading…</span>
+      <span class="sr-only">{{ 'common.loading' | t }}</span>
       @for (line of [1, 2, 3, 4]; track line) {
         <div class="mb-4 h-9 w-full animate-pulse rounded-sm bg-border"></div>
       }
@@ -31,7 +31,7 @@
 
     <form class="max-w-2xl" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="rounded-md border border-border bg-surface p-6">
-        <label class="mb-1.5 block text-body font-medium text-text" for="name">Name</label>
+        <label class="mb-1.5 block text-body font-medium text-text" for="name">{{ 'common.name' | t }}</label>
         <input
           id="name"
           type="text"
@@ -43,7 +43,7 @@
           <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
         }
 
-        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="email">Email</label>
+        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="email">{{ 'common.email' | t }}</label>
         <input
           id="email"
           type="email"
@@ -56,14 +56,14 @@
           <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
         }
 
-        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="role">Role</label>
+        <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="role">{{ 'common.role' | t }}</label>
         <select
           id="role"
           class="field"
           formControlName="role"
           [class.field-invalid]="fieldError('role')"
         >
-          <option value="">Select a role</option>
+          <option value="">{{ 'users.selectRole' | t }}</option>
           @for (role of roles(); track role.id) {
             <option [value]="role.name">{{ role.display_name }}</option>
           }
@@ -75,7 +75,7 @@
         <hr class="my-6 border-0 border-t border-border" />
 
         <label class="mb-1.5 block text-body font-medium text-text" for="password">
-          Password
+          {{ 'users.password' | t }}
         </label>
         <input
           id="password"
@@ -88,13 +88,13 @@
         @if (fieldError('password'); as message) {
           <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
         } @else if (isEdit()) {
-          <p class="mt-1.5 text-meta text-text-muted">Leave blank to keep the current password.</p>
+          <p class="mt-1.5 text-meta text-text-muted">{{ 'users.passwordKeepHint' | t }}</p>
         } @else {
-          <p class="mt-1.5 text-meta text-text-muted">At least 8 characters.</p>
+          <p class="mt-1.5 text-meta text-text-muted">{{ 'users.passwordHint' | t }}</p>
         }
 
         <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="password_confirmation">
-          Confirm password
+          {{ 'users.confirmPassword' | t }}
         </label>
         <input
           id="password_confirmation"
@@ -110,9 +110,9 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        <a class="btn-quiet" routerLink="/users">Cancel</a>
+        <a class="btn-quiet" routerLink="/users">{{ 'common.cancel' | t }}</a>
         <button type="submit" class="btn-primary" [disabled]="saving()">
-          {{ saving() ? 'Saving…' : 'Save user' }}
+          {{ saving() ? ('common.saving' | t) : ('users.save' | t) }}
         </button>
       </div>
     </form>

@@ -14,13 +14,12 @@
       <path d="m20 20-3.5-3.5" />
     </svg>
 
-    <p class="mt-4 mb-0 text-meta font-medium tracking-wide text-text-muted">404</p>
-    <h1 class="mt-1 mb-0 text-page-title font-semibold text-text">No such page</h1>
+    <p class="mt-4 mb-0 text-meta font-medium tracking-wide text-text-muted">{{ 'errors.notFound.code' | t }}</p>
+    <h1 class="mt-1 mb-0 text-page-title font-semibold text-text">{{ 'errors.notFound.title' | t }}</h1>
     <p class="mt-2 mb-0 text-body text-text-secondary">
-      Nothing is at this address. The link may be out of date, or the record may have been
-      deleted.
+{{ 'errors.notFound.message' | t }}
     </p>
 
-    <a class="btn-primary mt-6" routerLink="/dashboard">Back to dashboard</a>
+    <a class="btn-primary mt-6" routerLink="/dashboard">{{ 'errors.backToDashboard' | t }}</a>
   </div>
 </div>

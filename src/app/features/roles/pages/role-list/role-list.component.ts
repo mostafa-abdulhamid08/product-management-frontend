@@ -3,7 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { PaginationMeta } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -28,12 +30,14 @@ import { RoleService } from '../../services/role.service';
     PageHeaderComponent,
     DataTableComponent,
     ConfirmDialogComponent,
+    TranslatePipe,
   ],
   templateUrl: './role-list.component.html',
 })
 export class RoleListComponent implements OnInit {
   private readonly roles = inject(RoleService);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   readonly rows = signal<Role[]>([]);
   readonly meta = signal<PaginationMeta | null>(null);
@@ -52,15 +56,34 @@ export class RoleListComponent implements OnInit {
 
   /** Built from the matrix, so a new resource or action needs no change here. */
   readonly columns = computed<DataTableColumn[]>(() => [
-    { label: 'Role' },
+    { label: this.locale.translate('roles.role') },
     ...this.actions().map((action) => ({
-      label: action.charAt(0).toUpperCase() + action.slice(1),
+      label: this.actionLabel(action),
       align: 'center' as const,
       width: 'w-24',
     })),
-    { label: 'Users', align: 'end', width: 'w-20' },
-    { label: 'Actions', align: 'end', width: 'w-24' },
+    { label: this.locale.translate('roles.usersCount'), align: 'end', width: 'w-20' },
+    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-24' },
   ]);
+
+  /**
+   * An action is an identifier from the API. Only its label is translated, and
+   * an action we have no wording for falls back to the identifier itself.
+   */
+  actionLabel(action: string): string {
+    const key = `roles.actions.${action}`;
+    const label = this.locale.translate(key);
+
+    return label === key ? action : label;
+  }
+
+  /** Same split for a resource: `products` is a key, "Products" is a label. */
+  resourceLabel(resource: string): string {
+    const key = `roles.resources.${resource}`;
+    const label = this.locale.translate(key);
+
+    return label === key ? resource : label;
+  }
 
   ngOnInit(): void {
     this.load();
@@ -130,7 +153,10 @@ export class RoleListComponent implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.pendingDelete.set(null);
-        this.toast.show('success', `${role.display_name} was deleted.`);
+        this.toast.show(
+          'success',
+          this.locale.translate('roles.deleted', { name: role.display_name }),
+        );
         this.load();
       },
       error: (error: HttpErrorResponse) => {
@@ -140,7 +166,10 @@ export class RoleListComponent implements OnInit {
         // A role still assigned to someone cannot be deleted, and super-admin
         // never can. Both come back as a worded refusal.
         if (error.status === 422) {
-          this.toast.show('error', error.error?.message ?? 'That role could not be deleted.');
+          this.toast.show(
+            'error',
+            error.error?.message ?? this.locale.translate('roles.deleteFailed'),
+          );
         }
       },
     });

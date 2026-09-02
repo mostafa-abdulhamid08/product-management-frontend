@@ -3,7 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 import { ValidationErrorBody } from '../../../../core/models/api-response.model';
+import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -18,13 +20,20 @@ import { RoleService } from '../../services/role.service';
 
 @Component({
   selector: 'app-role-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, EmptyStateComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    PageHeaderComponent,
+    EmptyStateComponent,
+    TranslatePipe,
+  ],
   templateUrl: './role-form.component.html',
 })
 export class RoleFormComponent implements OnInit {
   private readonly roles = inject(RoleService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly locale = inject(LocaleService);
 
   readonly id = input<string | undefined>(undefined);
 
@@ -53,7 +62,22 @@ export class RoleFormComponent implements OnInit {
   });
 
   readonly isEdit = computed(() => this.roleId() !== null);
-  readonly heading = computed(() => (this.isEdit() ? 'Edit role' : 'Add role'));
+  readonly headingKey = computed(() => (this.isEdit() ? 'roles.editTitle' : 'roles.addTitle'));
+
+  /** Identifier in, label out. An unknown one prints as itself. */
+  actionLabel(action: string): string {
+    const key = `roles.actions.${action}`;
+    const label = this.locale.translate(key);
+
+    return label === key ? action : label;
+  }
+
+  resourceLabel(resource: string): string {
+    const key = `roles.resources.${resource}`;
+    const label = this.locale.translate(key);
+
+    return label === key ? resource : label;
+  }
   readonly selectedCount = computed(() => this.selected().size);
   readonly totalCount = computed(() =>
     Object.values(this.matrix()).reduce((sum, actions) => sum + actions.length, 0),
@@ -208,7 +232,10 @@ export class RoleFormComponent implements OnInit {
 
     request.subscribe({
       next: (role) => {
-        this.toast.show('success', `${role.display_name} was saved.`);
+        this.toast.show(
+          'success',
+          this.locale.translate('roles.saved', { name: role.display_name }),
+        );
         this.router.navigateByUrl('/roles');
       },
       error: (error: HttpErrorResponse) => {
@@ -220,7 +247,7 @@ export class RoleFormComponent implements OnInit {
 
   private applyServerError(error: HttpErrorResponse): void {
     if (error.status !== 422) {
-      this.formError.set('Could not save this role. Please try again.');
+      this.formError.set(this.locale.translate('roles.saveFailed'));
 
       return;
     }
@@ -262,10 +289,10 @@ export class RoleFormComponent implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'This field is required.';
+      return this.locale.translate('common.requiredField');
     }
 
-    return control.hasError('maxlength') ? 'Keep this under 255 characters.' : null;
+    return control.hasError('maxlength') ? this.locale.translate('common.maxLength') : null;
   }
 
   private clearServerErrors(): void {

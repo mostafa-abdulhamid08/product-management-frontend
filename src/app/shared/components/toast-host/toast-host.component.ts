@@ -8,5 +8,6 @@ import { Toast } from '../../../core/services/toast.service';
 })
 export class ToastHostComponent {
   readonly toasts = input.required<Toast[]>();
+  readonly dismissLabel = input<string>('Dismiss');
   readonly dismissed = output<number>();
 }

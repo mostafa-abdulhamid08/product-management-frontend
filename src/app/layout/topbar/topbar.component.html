@@ -1,7 +1,17 @@
 <header class="flex h-14 items-center justify-between border-b border-border bg-surface px-6">
-  <span class="text-section font-semibold text-primary">Product Management</span>
+  <span class="text-section font-semibold text-primary">{{ 'app.name' | t }}</span>
 
   <div class="flex items-center gap-4">
+    <select
+      class="field h-8 w-32 text-meta"
+      [attr.aria-label]="'topbar.language' | t"
+      [value]="locale()"
+      (change)="switchLocale($any($event.target).value)"
+    >
+      <option value="en">{{ 'topbar.english' | t }}</option>
+      <option value="ar">{{ 'topbar.arabic' | t }}</option>
+    </select>
+
     @if (user(); as current) {
       <div class="flex flex-col items-end leading-tight">
         <span class="text-body text-text">{{ current.name }}</span>
@@ -15,7 +25,7 @@
       (click)="logout()"
     >
       <svg
-        class="size-4"
+        class="size-4 rtl:-scale-x-100"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -28,7 +38,7 @@
         <path d="m16 17 5-5-5-5" />
         <path d="M21 12H9" />
       </svg>
-      <span>Log out</span>
+      <span>{{ 'topbar.logout' | t }}</span>
     </button>
   </div>
 </header>
