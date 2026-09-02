@@ -44,7 +44,11 @@
     "nextPage": "Next page",
     "dismiss": "Dismiss",
     "genericError": "Something went wrong. Please try again.",
-    "loadFailed": "The request did not come back. It may be a connection problem."
+    "loadFailed": "The request did not come back. It may be a connection problem.",
+    "nameEn": "Name (English)",
+    "nameAr": "Name (Arabic)",
+    "descriptionEn": "Description (English)",
+    "descriptionAr": "Description (Arabic)"
   },
   "login": {
     "title": "Sign in",

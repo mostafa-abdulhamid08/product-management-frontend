@@ -10,7 +10,12 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { Category } from '../../models/category.model';
-import { CategoryService } from '../../services/category.service';
+import { CategoryPayload, CategoryService } from '../../services/category.service';
+
+/** An emptied textarea means "no description", which the API spells as null. */
+function blankToNull(value: string): string | null {
+  return value.trim() === '' ? null : value;
+}
 
 @Component({
   selector: 'app-category-form',
@@ -32,8 +37,10 @@ export class CategoryFormComponent implements OnInit {
   readonly id = input<string | undefined>(undefined);
 
   readonly form = inject(FormBuilder).nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
-    description: [''],
+    name_en: ['', [Validators.required, Validators.maxLength(255)]],
+    name_ar: ['', [Validators.required, Validators.maxLength(255)]],
+    description_en: [''],
+    description_ar: [''],
   });
 
   readonly loading = signal(false);
@@ -73,8 +80,10 @@ export class CategoryFormComponent implements OnInit {
 
   private fill(category: Category): void {
     this.form.patchValue({
-      name: this.locale.text(category.name),
-      description: this.locale.text(category.description),
+      name_en: category.name.en ?? '',
+      name_ar: category.name.ar ?? '',
+      description_en: category.description?.en ?? '',
+      description_ar: category.description?.ar ?? '',
     });
   }
 
@@ -95,9 +104,11 @@ export class CategoryFormComponent implements OnInit {
     this.saving.set(true);
 
     const value = this.form.getRawValue();
-    const payload = {
-      name: value.name,
-      description: value.description.trim() === '' ? null : value.description,
+    const payload: CategoryPayload = {
+      name_en: value.name_en,
+      name_ar: value.name_ar,
+      description_en: blankToNull(value.description_en),
+      description_ar: blankToNull(value.description_ar),
     };
 
     const request = this.isEdit()

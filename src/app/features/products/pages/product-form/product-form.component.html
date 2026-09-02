@@ -32,31 +32,81 @@
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div class="rounded-md border border-border bg-surface p-6">
-          <label class="mb-1.5 block text-body font-medium text-text" for="name">{{ 'common.name' | t }}</label>
-          <input
-            id="name"
-            type="text"
-            class="field"
-            formControlName="name"
-            [class.field-invalid]="fieldError('name')"
-          />
-          @if (fieldError('name'); as message) {
-            <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
-          }
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1.5 block text-body font-medium text-text" for="name_en">
+                {{ 'common.nameEn' | t }}
+              </label>
+              <input
+                id="name_en"
+                type="text"
+                dir="ltr"
+                lang="en"
+                class="field"
+                formControlName="name_en"
+                [class.field-invalid]="fieldError('name_en')"
+              />
+              @if (fieldError('name_en'); as message) {
+                <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+              }
+            </div>
 
-          <label class="mt-5 mb-1.5 block text-body font-medium text-text" for="description">
-            {{ 'common.description' | t }}
-          </label>
-          <textarea
-            id="description"
-            rows="4"
-            class="field h-auto py-2"
-            formControlName="description"
-            [class.field-invalid]="fieldError('description')"
-          ></textarea>
-          @if (fieldError('description'); as message) {
-            <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
-          }
+            <div>
+              <label class="mb-1.5 block text-body font-medium text-text" for="name_ar">
+                {{ 'common.nameAr' | t }}
+              </label>
+              <input
+                id="name_ar"
+                type="text"
+                dir="rtl"
+                lang="ar"
+                class="field"
+                formControlName="name_ar"
+                [class.field-invalid]="fieldError('name_ar')"
+              />
+              @if (fieldError('name_ar'); as message) {
+                <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+              }
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1.5 block text-body font-medium text-text" for="description_en">
+                {{ 'common.descriptionEn' | t }}
+              </label>
+              <textarea
+                id="description_en"
+                rows="4"
+                dir="ltr"
+                lang="en"
+                class="field h-auto py-2"
+                formControlName="description_en"
+                [class.field-invalid]="fieldError('description_en')"
+              ></textarea>
+              @if (fieldError('description_en'); as message) {
+                <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="mb-1.5 block text-body font-medium text-text" for="description_ar">
+                {{ 'common.descriptionAr' | t }}
+              </label>
+              <textarea
+                id="description_ar"
+                rows="4"
+                dir="rtl"
+                lang="ar"
+                class="field h-auto py-2"
+                formControlName="description_ar"
+                [class.field-invalid]="fieldError('description_ar')"
+              ></textarea>
+              @if (fieldError('description_ar'); as message) {
+                <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+              }
+            </div>
+          </div>
 
           <div class="mt-5 grid gap-4 sm:grid-cols-2">
             <div>

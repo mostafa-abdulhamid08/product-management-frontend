@@ -42,8 +42,10 @@ export class ProductFormComponent implements OnInit {
   readonly id = input<string | undefined>(undefined);
 
   readonly form = inject(FormBuilder).nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
-    description: [''],
+    name_en: ['', [Validators.required, Validators.maxLength(255)]],
+    name_ar: ['', [Validators.required, Validators.maxLength(255)]],
+    description_en: [''],
+    description_ar: [''],
     price: ['', [Validators.required, Validators.min(0)]],
     stock: [0, [Validators.required, Validators.min(0)]],
     category_id: ['', [Validators.required]],
@@ -109,8 +111,10 @@ export class ProductFormComponent implements OnInit {
 
   private fill(product: Product): void {
     this.form.patchValue({
-      name: this.locale.text(product.name),
-      description: this.locale.text(product.description),
+      name_en: product.name.en ?? '',
+      name_ar: product.name.ar ?? '',
+      description_en: product.description?.en ?? '',
+      description_ar: product.description?.ar ?? '',
       price: product.price,
       stock: product.stock,
       category_id: String(product.category_id),
@@ -207,8 +211,10 @@ export class ProductFormComponent implements OnInit {
     const value = this.form.getRawValue();
     const data = new FormData();
 
-    data.append('name', value.name);
-    data.append('description', value.description ?? '');
+    data.append('name_en', value.name_en);
+    data.append('name_ar', value.name_ar);
+    data.append('description_en', value.description_en);
+    data.append('description_ar', value.description_ar);
     data.append('price', value.price);
     data.append('stock', String(value.stock));
     data.append('category_id', value.category_id);

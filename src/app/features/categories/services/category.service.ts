@@ -6,8 +6,10 @@ import { ApiResponse, Paginated } from '../../../core/models/api-response.model'
 import { Category, CategoryFilters } from '../models/category.model';
 
 export interface CategoryPayload {
-  name: string;
-  description: string | null;
+  name_en: string;
+  name_ar: string;
+  description_en: string | null;
+  description_ar: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
