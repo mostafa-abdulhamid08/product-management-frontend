@@ -5,6 +5,21 @@ export interface ProductCategory {
   name: TranslatedText;
 }
 
+export interface ProductImage {
+  id: number;
+  url: string;
+  thumb_url: string;
+  is_primary: boolean;
+  /** The position in the gallery. The API renumbers from 1 on every reorder. */
+  order: number;
+}
+
+/**
+ * The ceiling the API enforces. Mirrored here so the form can refuse a ninth file
+ * before spending an upload — the server is still the authority.
+ */
+export const MAX_PRODUCT_IMAGES = 8;
+
 export interface Product {
   id: number;
   name: TranslatedText;
@@ -17,8 +32,14 @@ export interface Product {
   /** A string on purpose — money is never a float. See README. */
   price: string;
   stock: number;
-  image_path: string | null;
-  image_url: string | null;
+  /**
+   * A list row and the dashboard carry only the primary image's thumbnail; the
+   * details endpoint carries the whole gallery instead. A page of fifteen products
+   * would otherwise ship up to a hundred and twenty image objects to render fifteen
+   * thumbnails. Exactly one of these two keys is present on any given response.
+   */
+  primary_image_url?: string | null;
+  images?: ProductImage[];
   is_active: boolean;
   status_label: string;
   category_id: number;

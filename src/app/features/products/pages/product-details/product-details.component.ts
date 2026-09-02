@@ -12,7 +12,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { PricePipe } from '../../../../shared/pipes/price.pipe';
-import { Product } from '../../models/product.model';
+import { Product, ProductImage } from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 
 @Component({
@@ -48,6 +48,13 @@ export class ProductDetailsComponent implements OnInit {
   });
 
   readonly product = signal<Product | null>(null);
+
+  /** In gallery order. The details endpoint sorts it; a list row has none of it. */
+  readonly images = computed<ProductImage[]>(() => this.product()?.images ?? []);
+
+  readonly primaryImage = computed<ProductImage | null>(
+    () => this.images().find((image) => image.is_primary) ?? this.images()[0] ?? null,
+  );
   readonly loading = signal(true);
   readonly missing = signal(false);
   readonly failed = signal(false);

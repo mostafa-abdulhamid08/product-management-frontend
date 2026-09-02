@@ -60,11 +60,7 @@ export class ProductFormComponent implements OnInit {
 
   readonly imageFile = signal<File | null>(null);
   readonly imagePreview = signal<string | null>(null);
-  readonly existingImage = signal<string | null>(null);
   readonly imageError = signal<string | null>(null);
-
-  /** The newly picked file wins; otherwise show whatever the product already has. */
-  readonly previewSrc = computed(() => this.imagePreview() ?? this.existingImage());
 
   /**
    * Edit mode is decided by a usable numeric id, never by the input merely
@@ -120,8 +116,6 @@ export class ProductFormComponent implements OnInit {
       category_id: String(product.category_id),
       is_active: product.is_active,
     });
-
-    this.existingImage.set(product.image_url);
   }
 
   onImage(event: Event): void {
