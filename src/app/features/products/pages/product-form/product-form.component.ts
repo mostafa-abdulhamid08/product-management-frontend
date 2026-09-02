@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -10,11 +10,17 @@ import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { CategoryOption, Product } from '../../models/product.model';
+import { CategoryOption, MAX_PRODUCT_IMAGES, Product } from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg'];
+
+/** A file chosen but not yet uploaded, with the blob URL its preview renders from. */
+interface PickedImage {
+  file: File;
+  url: string;
+}
 
 @Component({
   selector: 'app-product-form',
@@ -28,7 +34,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg'];
   ],
   templateUrl: './product-form.component.html',
 })
-export class ProductFormComponent implements OnInit {
+export class ProductFormComponent implements OnInit, OnDestroy {
   private readonly products = inject(ProductService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -58,8 +64,8 @@ export class ProductFormComponent implements OnInit {
   readonly missing = signal(false);
   readonly formError = signal<string | null>(null);
 
-  readonly imageFile = signal<File | null>(null);
-  readonly imagePreview = signal<string | null>(null);
+  readonly maxImages = MAX_PRODUCT_IMAGES;
+  readonly pickedImages = signal<PickedImage[]>([]);
   readonly imageError = signal<string | null>(null);
 
   /**
@@ -118,52 +124,70 @@ export class ProductFormComponent implements OnInit {
     });
   }
 
-  onImage(event: Event): void {
+  /**
+   * Adds to the selection rather than replacing it, so several picks build one
+   * set. The first file in the finished set becomes the primary image — that is
+   * the API's rule, not ours, and the badge on the first preview says so.
+   */
+  onImages(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
+    const chosen = Array.from(input.files ?? []);
 
+    // Cleared so that re-picking the very same file still fires a change event.
+    input.value = '';
     this.imageError.set(null);
 
-    if (!file) {
-      this.clearImage();
+    if (chosen.length === 0) {
+      return;
+    }
+
+    if (chosen.length > this.maxImages - this.pickedImages().length) {
+      this.imageError.set(
+        this.locale.translate('products.tooManyImages', { max: this.maxImages }),
+      );
 
       return;
     }
 
-    // The same two rules the backend enforces, so the user hears about it
-    // before spending an upload. The server is still the authority.
+    // The same two rules the backend enforces, so the user hears about it before
+    // spending an upload. The server is still the authority. Every file is checked
+    // before any blob URL is made, so a rejected batch leaks nothing.
+    const rejection = chosen.map((file) => this.reject(file)).find((key) => key !== null);
+
+    if (rejection) {
+      this.imageError.set(this.locale.translate(rejection));
+
+      return;
+    }
+
+    const picked = chosen.map((file) => ({ file, url: URL.createObjectURL(file) }));
+
+    this.pickedImages.update((current) => [...current, ...picked]);
+  }
+
+  private reject(file: File): string | null {
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      this.imageError.set(this.locale.translate('products.imageType'));
-      input.value = '';
-
-      return;
+      return 'products.imageType';
     }
 
-    if (file.size > MAX_IMAGE_BYTES) {
-      this.imageError.set(this.locale.translate('products.imageTooLarge'));
-      input.value = '';
-
-      return;
-    }
-
-    this.revokePreview();
-    this.imageFile.set(file);
-    this.imagePreview.set(URL.createObjectURL(file));
+    return file.size > MAX_IMAGE_BYTES ? 'products.imageTooLarge' : null;
   }
 
-  clearImage(): void {
-    this.revokePreview();
-    this.imageFile.set(null);
-    this.imagePreview.set(null);
+  removePicked(index: number): void {
     this.imageError.set(null);
+    this.pickedImages.update((current) => {
+      const removed = current[index];
+
+      if (removed) {
+        URL.revokeObjectURL(removed.url);
+      }
+
+      return current.filter((_, position) => position !== index);
+    });
   }
 
-  private revokePreview(): void {
-    const preview = this.imagePreview();
-
-    if (preview) {
-      URL.revokeObjectURL(preview);
-    }
+  ngOnDestroy(): void {
+    this.pickedImages().forEach(({ url }) => URL.revokeObjectURL(url));
   }
 
   submit(): void {
@@ -214,10 +238,11 @@ export class ProductFormComponent implements OnInit {
     data.append('category_id', value.category_id);
     data.append('is_active', value.is_active ? '1' : '0');
 
-    const image = this.imageFile();
-
-    if (image) {
-      data.append('image', image);
+    // Create only. `images` on an update replaces the whole collection and deletes
+    // the files it replaces, so the edit screen manages images through their own
+    // endpoints instead and this form never sends the key there.
+    if (!this.isEdit()) {
+      this.pickedImages().forEach(({ file }) => data.append('images[]', file));
     }
 
     return data;
@@ -240,7 +265,7 @@ export class ProductFormComponent implements OnInit {
     const unmatched: string[] = [];
 
     Object.entries(errors).forEach(([field, messages]) => {
-      if (field === 'image') {
+      if (field === 'images' || field.startsWith('images.')) {
         this.imageError.set(messages[0]);
 
         return;

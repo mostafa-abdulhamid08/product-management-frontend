@@ -127,7 +127,13 @@
     "activeLabel": "نشط",
     "saveFailed": "تعذر حفظ هذا المنتج. من فضلك حاول مرة أخرى.",
     "minZero": "أدخل قيمة 0 أو أكبر.",
-    "showImage": "عرض الصورة {position}"
+    "showImage": "عرض الصورة {position}",
+    "images": "الصور",
+    "imagesLabel": "صور المنتج",
+    "imagesHint": "PNG أو JPG، حتى 2 ميجابايت للصورة. حتى {max} صور.",
+    "primaryBadge": "الرئيسية",
+    "removeImageAt": "إزالة الصورة {position}",
+    "tooManyImages": "لا يمكن أن يحتوي المنتج على أكثر من {max} صور."
   },
   "categories": {
     "title": "الفئات",

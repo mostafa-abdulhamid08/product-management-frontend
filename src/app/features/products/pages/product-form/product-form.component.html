@@ -166,14 +166,54 @@
         </div>
 
         <div class="rounded-md border border-border bg-surface p-6">
-          <p class="m-0 mb-1.5 text-body font-medium text-text">{{ 'products.image' | t }}</p>
+          <div class="mb-3 flex items-baseline justify-between gap-3">
+            <p class="m-0 text-body font-medium text-text">{{ 'products.images' | t }}</p>
+            <span class="ratio text-meta text-text-muted">
+              {{ pickedImages().length }} / {{ maxImages }}
+            </span>
+          </div>
 
-          @if (imagePreview(); as src) {
-            <img
-              [src]="src"
-              alt="Product image"
-              class="mb-3 aspect-square w-full rounded-md border border-border object-cover"
-            />
+          @if (pickedImages().length > 0) {
+            <ul class="m-0 mb-3 grid list-none grid-cols-2 gap-2 p-0">
+              @for (picked of pickedImages(); track picked.url; let index = $index) {
+                <li class="relative">
+                  <img
+                    [src]="picked.url"
+                    alt=""
+                    class="aspect-square w-full rounded-sm border border-border object-cover"
+                  />
+
+                  @if (index === 0) {
+                    <span
+                      class="absolute start-1 top-1 rounded-sm bg-primary px-1.5 text-meta text-surface"
+                    >
+                      {{ 'products.primaryBadge' | t }}
+                    </span>
+                  }
+
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn-danger absolute end-1 top-1 bg-surface"
+                    [attr.aria-label]="'products.removeImageAt' | t: { position: index + 1 }"
+                    (click)="removePicked(index)"
+                  >
+                    <svg
+                      class="size-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </li>
+              }
+            </ul>
           } @else {
             <div
               class="mb-3 flex aspect-square w-full items-center justify-center rounded-md border border-dashed border-border bg-bg text-body text-text-muted"
@@ -184,23 +224,21 @@
 
           <input
             type="file"
+            multiple
             accept="image/png,image/jpeg"
             class="field h-auto py-1.5 file:me-3 file:rounded-sm file:border-0 file:bg-bg file:px-3 file:py-1 file:text-body file:text-text-secondary"
-            [attr.aria-label]="'products.imageLabel' | t"
+            [attr.aria-label]="'products.imagesLabel' | t"
             [class.field-invalid]="imageError()"
-            (change)="onImage($event)"
+            [disabled]="pickedImages().length >= maxImages"
+            (change)="onImages($event)"
           />
 
           @if (imageError(); as message) {
             <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
           } @else {
-            <p class="mt-1.5 text-meta text-text-muted">{{ 'products.imageHint' | t }}</p>
-          }
-
-          @if (imageFile()) {
-            <button type="button" class="btn-quiet mt-3 w-full" (click)="clearImage()">
-              {{ 'products.removeImage' | t }}
-            </button>
+            <p class="mt-1.5 text-meta text-text-muted">
+              {{ 'products.imagesHint' | t: { max: maxImages } }}
+            </p>
           }
         </div>
       </div>

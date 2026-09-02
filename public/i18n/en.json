@@ -127,7 +127,13 @@
     "activeLabel": "Active",
     "saveFailed": "Could not save this product. Please try again.",
     "minZero": "Enter a value of 0 or more.",
-    "showImage": "Show image {position}"
+    "showImage": "Show image {position}",
+    "images": "Images",
+    "imagesLabel": "Product images",
+    "imagesHint": "PNG or JPG, up to 2 MB each. Up to {max} images.",
+    "primaryBadge": "Primary",
+    "removeImageAt": "Remove image {position}",
+    "tooManyImages": "A product can hold at most {max} images."
   },
   "categories": {
     "title": "Categories",
