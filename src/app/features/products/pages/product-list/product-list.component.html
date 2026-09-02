@@ -84,9 +84,9 @@
   <ng-template #row let-product>
     <tr class="border-b border-border last:border-b-0 hover:bg-bg">
       <td class="px-4 py-2">
-        @if (product.image_url) {
+        @if (product.primary_image_url) {
           <img
-            [src]="product.image_url"
+            [src]="product.primary_image_url"
             [alt]="product.name | tx"
             class="size-10 rounded-sm border border-border object-cover"
           />
