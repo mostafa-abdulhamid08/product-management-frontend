@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { TranslatedTextPipe } from '../../../../core/pipes/translated-text.pipe';
 import { ValidationErrorBody } from '../../../../core/models/api-response.model';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -23,6 +24,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg'];
     PageHeaderComponent,
     EmptyStateComponent,
     TranslatePipe,
+    TranslatedTextPipe,
   ],
   templateUrl: './product-form.component.html',
 })
@@ -107,8 +109,8 @@ export class ProductFormComponent implements OnInit {
 
   private fill(product: Product): void {
     this.form.patchValue({
-      name: product.name,
-      description: product.description ?? '',
+      name: this.locale.text(product.name),
+      description: this.locale.text(product.description),
       price: product.price,
       stock: product.stock,
       category_id: String(product.category_id),
@@ -190,7 +192,7 @@ export class ProductFormComponent implements OnInit {
       next: (product) => {
         this.toast.show(
           'success',
-          this.locale.translate('products.saved', { name: product.name }),
+          this.locale.translate('products.saved', { name: this.locale.text(product.name) }),
         );
         this.router.navigateByUrl(`/products/${product.id}`);
       },

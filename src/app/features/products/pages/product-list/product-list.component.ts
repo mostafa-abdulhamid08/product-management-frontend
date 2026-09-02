@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { TranslatedTextPipe } from '../../../../core/pipes/translated-text.pipe';
 import { PaginationMeta } from '../../../../core/models/api-response.model';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -37,6 +38,7 @@ import { ProductService } from '../../services/product.service';
     ConfirmDialogComponent,
     PricePipe,
     TranslatePipe,
+    TranslatedTextPipe,
   ],
   templateUrl: './product-list.component.html',
 })
@@ -142,7 +144,7 @@ export class ProductListComponent implements OnInit {
       next: () => {
         this.deleting.set(false);
         this.pendingDelete.set(null);
-        this.toast.show('success', this.locale.translate('products.deleted', { name: product.name }));
+        this.toast.show('success', this.locale.translate('products.deleted', { name: this.locale.text(product.name) }));
         this.afterDelete();
       },
       error: () => {

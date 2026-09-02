@@ -73,8 +73,8 @@ export class CategoryFormComponent implements OnInit {
 
   private fill(category: Category): void {
     this.form.patchValue({
-      name: category.name,
-      description: category.description ?? '',
+      name: this.locale.text(category.name),
+      description: this.locale.text(category.description),
     });
   }
 
@@ -108,7 +108,9 @@ export class CategoryFormComponent implements OnInit {
       next: (category) => {
         this.toast.show(
           'success',
-          this.locale.translate('categories.saved', { name: category.name }),
+          this.locale.translate('categories.saved', {
+            name: this.locale.text(category.name),
+          }),
         );
         this.router.navigateByUrl('/categories');
       },

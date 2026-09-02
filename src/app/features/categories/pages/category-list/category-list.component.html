@@ -62,8 +62,8 @@
 
   <ng-template #row let-category>
     <tr class="border-b border-border last:border-b-0 hover:bg-bg">
-      <td class="px-4 py-3 text-text">{{ category.name }}</td>
-      <td class="px-4 py-3 text-text-secondary">{{ category.description || ('common.none' | t) }}</td>
+      <td class="px-4 py-3 text-text">{{ category.name | tx }}</td>
+      <td class="px-4 py-3 text-text-secondary">{{ (category.description | tx) || ('common.none' | t) }}</td>
       <td class="px-4 py-3 text-end text-text tabular-nums">{{ category.products_count }}</td>
       <td
         *hasPermission="['categories.update', 'categories.delete']"
@@ -74,7 +74,7 @@
             *hasPermission="'categories.update'"
             class="icon-btn"
             [routerLink]="['/categories', category.id, 'edit']"
-            [attr.aria-label]="'categories.editAria' | t: { name: category.name }"
+            [attr.aria-label]="'categories.editAria' | t: { name: category.name | tx }"
           >
             <svg
               class="size-4"
@@ -95,7 +95,7 @@
             *hasPermission="'categories.delete'"
             type="button"
             class="icon-btn icon-btn-danger"
-            [attr.aria-label]="'categories.deleteAria' | t: { name: category.name }"
+            [attr.aria-label]="'categories.deleteAria' | t: { name: category.name | tx }"
             (click)="askDelete(category)"
           >
             <svg
@@ -124,8 +124,8 @@
     [heading]="'categories.deleteHeading' | t"
     [message]="
       category.products_count > 0
-        ? ('categories.deleteBlocked' | t: { name: category.name, count: category.products_count })
-        : ('categories.deleteMessage' | t: { name: category.name })
+        ? ('categories.deleteBlocked' | t: { name: (category.name | tx), count: category.products_count })
+        : ('categories.deleteMessage' | t: { name: category.name | tx })
     "
     [confirmLabel]="'common.delete' | t"
     [cancelLabel]="'common.cancel' | t"

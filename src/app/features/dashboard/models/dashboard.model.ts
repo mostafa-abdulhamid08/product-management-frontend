@@ -1,3 +1,5 @@
+import { TranslatedText } from '../../../core/models/translated-text.model';
+
 /**
  * Only the fields the dashboard renders. Deliberately not the Products feature's
  * `Product` — features never import from each other, and this screen needs a
@@ -5,12 +7,12 @@
  */
 export interface RecentProduct {
   id: number;
-  name: string;
+  name: TranslatedText;
   price: string;
   stock: number;
   is_active: boolean;
   status_label: string;
-  category: { id: number; name: string };
+  category: { id: number; name: TranslatedText };
   created_at: string;
 }
 

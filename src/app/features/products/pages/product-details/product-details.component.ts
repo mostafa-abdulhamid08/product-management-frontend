@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { TranslatedTextPipe } from '../../../../core/pipes/translated-text.pipe';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -26,6 +27,7 @@ import { ProductService } from '../../services/product.service';
     ConfirmDialogComponent,
     PricePipe,
     TranslatePipe,
+    TranslatedTextPipe,
   ],
   templateUrl: './product-details.component.html',
 })
@@ -98,7 +100,7 @@ export class ProductDetailsComponent implements OnInit {
       next: () => {
         this.toast.show(
           'success',
-          this.locale.translate('products.deleted', { name: product.name }),
+          this.locale.translate('products.deleted', { name: this.locale.text(product.name) }),
         );
         this.router.navigateByUrl('/products');
       },

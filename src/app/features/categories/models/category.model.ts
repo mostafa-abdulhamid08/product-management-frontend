@@ -1,7 +1,10 @@
+import { TranslatedText } from '../../../core/models/translated-text.model';
+
 export interface Category {
   id: number;
-  name: string;
-  description: string | null;
+  name: TranslatedText;
+  /** Absent when neither language has been written. */
+  description?: TranslatedText;
   /** Derived with withCount on the backend; never stored. */
   products_count: number;
   created_at: string;

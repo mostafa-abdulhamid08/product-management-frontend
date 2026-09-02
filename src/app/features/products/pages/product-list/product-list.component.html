@@ -22,7 +22,7 @@
   >
     <option value="">{{ 'products.allCategories' | t }}</option>
     @for (category of categories(); track category.id) {
-      <option [value]="category.id">{{ category.name }}</option>
+      <option [value]="category.id">{{ category.name | tx }}</option>
     }
   </select>
 
@@ -87,7 +87,7 @@
         @if (product.image_url) {
           <img
             [src]="product.image_url"
-            [alt]="product.name"
+            [alt]="product.name | tx"
             class="size-10 rounded-sm border border-border object-cover"
           />
         } @else {
@@ -99,8 +99,8 @@
           </div>
         }
       </td>
-      <td class="px-4 py-2 text-text">{{ product.name }}</td>
-      <td class="px-4 py-2 text-text-secondary">{{ product.category.name }}</td>
+      <td class="px-4 py-2 text-text">{{ product.name | tx }}</td>
+      <td class="px-4 py-2 text-text-secondary">{{ product.category.name | tx }}</td>
       <td class="px-4 py-2 text-end text-text tabular-nums">{{ product.price | price }}</td>
       <td class="px-4 py-2 text-end text-text tabular-nums">{{ product.stock }}</td>
       <td class="px-4 py-2">
@@ -111,7 +111,7 @@
           <a
             class="icon-btn"
             [routerLink]="['/products', product.id]"
-            [attr.aria-label]="'products.view' | t: { name: product.name }"
+            [attr.aria-label]="'products.view' | t: { name: product.name | tx }"
           >
             <svg
               class="size-4"
@@ -132,7 +132,7 @@
             *hasPermission="'products.update'"
             class="icon-btn"
             [routerLink]="['/products', product.id, 'edit']"
-            [attr.aria-label]="'products.editAria' | t: { name: product.name }"
+            [attr.aria-label]="'products.editAria' | t: { name: product.name | tx }"
           >
             <svg
               class="size-4"
@@ -153,7 +153,7 @@
             *hasPermission="'products.delete'"
             type="button"
             class="icon-btn icon-btn-danger"
-            [attr.aria-label]="'products.deleteAria' | t: { name: product.name }"
+            [attr.aria-label]="'products.deleteAria' | t: { name: product.name | tx }"
             (click)="askDelete(product)"
           >
             <svg
@@ -180,7 +180,7 @@
 @if (pendingDelete(); as product) {
   <app-confirm-dialog
     [heading]="'products.deleteHeading' | t"
-    [message]="'products.deleteMessage' | t: { name: product.name }"
+    [message]="'products.deleteMessage' | t: { name: product.name | tx }"
     [confirmLabel]="'common.delete' | t"
     [cancelLabel]="'common.cancel' | t"
     [busyLabel]="'common.working' | t"

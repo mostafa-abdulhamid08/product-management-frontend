@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { TranslatedTextPipe } from '../../../../core/pipes/translated-text.pipe';
 import { PaginationMeta } from '../../../../core/models/api-response.model';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -32,6 +33,7 @@ import { CategoryService } from '../../services/category.service';
     DataTableComponent,
     ConfirmDialogComponent,
     TranslatePipe,
+    TranslatedTextPipe,
   ],
   templateUrl: './category-list.component.html',
 })
@@ -121,7 +123,9 @@ export class CategoryListComponent implements OnInit {
         this.pendingDelete.set(null);
         this.toast.show(
           'success',
-          this.locale.translate('categories.deleted', { name: category.name }),
+          this.locale.translate('categories.deleted', {
+            name: this.locale.text(category.name),
+          }),
         );
         this.afterDelete();
       },

@@ -74,10 +74,10 @@
                       class="rounded-sm text-text underline-offset-2 transition-colors hover:text-primary hover:underline active:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       [routerLink]="['/products', product.id]"
                     >
-                      {{ product.name }}
+                      {{ product.name | tx }}
                     </a>
                   </td>
-                  <td class="px-4 py-3 text-text-secondary">{{ product.category.name }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ product.category.name | tx }}</td>
                   <td class="px-4 py-3 text-end text-text tabular-nums">
                     {{ product.price | price }}
                   </td>
