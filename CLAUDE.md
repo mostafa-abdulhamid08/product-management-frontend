@@ -180,9 +180,22 @@ all with the same password: `manager@` (product-manager), `editor@`
 
 ## Current status
 
-**The frontend is complete.** Every screen in `README.md` exists, every step of the
-build order is done, and there is no outstanding work. What follows is orientation
-for whoever picks it up next, not a to-do list.
+**Every screen in `README.md` exists and every step of the build order is done.**
+Two backend changes are being folded in on top of that. Data localization is done;
+multiple product images is the next task and is not started.
+
+### Outstanding: multiple product images
+
+The API has dropped `image_path` for a Media Library gallery — up to eight images per
+product, exactly one primary. List rows and `recent_products` carry
+`primary_image_url`; the details endpoint carries an `images` array of
+`{ id, url, thumb_url, is_primary, order }`. Five endpoints under
+`/api/products/{id}/images`, all gated by `products.update`. Two business rules to
+surface: no ninth image, and the last image cannot be deleted.
+
+Until that lands, `Product` still declares the dead `image_path` and `image_url`
+fields and every product renders the no-image placeholder, because the API no longer
+sends either key.
 
 ### What is here
 
@@ -190,6 +203,13 @@ Angular 19.2, standalone, zone-based change detection. Tailwind 4.3 with the des
 tokens in a `@theme` block in `src/styles.css`, alongside the shared control classes
 (`.btn-primary`, `.btn-quiet`, `.btn-danger-text`, `.field`, `.icon-btn`, `.page-btn`,
 `.toggle`, `.ratio`).
+
+Product and category `name` and `description` are bilingual: the API stores and
+returns both languages at once as `{ en, ar }`, and the shape does not vary with
+`Accept-Language` — that header still picks the language of what the *system* says.
+`TranslatedText` in `core/models/` is the type, `LocaleService.text()` resolves it,
+and the `tx` pipe is that same resolution for templates. Both forms carry an input
+per language, and search matches either one because the API decides.
 
 Two shells chosen by `canMatch`; login with the `/me` bootstrap in
 `provideAppInitializer`; four interceptors (credentials, locale, progress, error);
@@ -219,6 +239,19 @@ Shared: `data-table`, `page-header`, `pagination`, `status-badge`, `confirm-dial
 - **The Actions column is projected, not configured.** Gating it with `*hasPermission`
   through the `actionsHeader` slot keeps permission strings in their four homes; a
   `columns` flag would have been a fifth.
+- **`tx` lives in `core/pipes/`, not `shared/pipes/`, unlike `price`.** It injects
+  `LocaleService` to know which language to resolve, and `shared/` may not import
+  `core/`. The dividing line is the service dependency, not the fact that it is a pipe.
+- **`TranslatedText` types both halves as `string | null`.** Names are non-empty in
+  both languages by the API's own validation, but descriptions are nullable per
+  language and the key is dropped entirely when neither is written. One permissive
+  type that says what can actually arrive beats two that have to be kept in step.
+- **`LocaleService.text()` falls back to the other language.** A row translated on one
+  side only would otherwise render as a blank cell, and a blank cell reads as a broken
+  record rather than as missing text.
+- **The translated form controls are named after the API's columns.** `name_en`,
+  `name_ar`, `description_en`, `description_ar` — so a 422 keyed on a column lands on
+  its own input by name alone, with no mapping table to keep in step.
 - **`shared/` takes every label as an input.** It cannot import `core/`, so it cannot
   translate; the defaults are English and every feature overrides them.
 - **The roles form builds `resource.action` strings.** That is payload being sent back,
