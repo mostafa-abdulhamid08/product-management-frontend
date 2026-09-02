@@ -239,6 +239,12 @@ export class ProductFormComponent implements OnInit {
     const body = error.error as ValidationErrorBody;
     const errors = body?.errors ?? {};
 
+    // The four translated controls are named after the columns the API
+    // validates — name_en, name_ar, description_en, description_ar — so each
+    // message lands on its own input by name alone. A key with no control of
+    // that name would otherwise vanish silently, so it goes to the banner.
+    const unmatched: string[] = [];
+
     Object.entries(errors).forEach(([field, messages]) => {
       if (field === 'image') {
         this.imageError.set(messages[0]);
@@ -246,8 +252,22 @@ export class ProductFormComponent implements OnInit {
         return;
       }
 
-      this.form.get(field)?.setErrors({ server: messages[0] });
+      const control = this.form.get(field);
+
+      if (control) {
+        control.setErrors({ server: messages[0] });
+
+        return;
+      }
+
+      unmatched.push(messages[0]);
     });
+
+    if (unmatched.length > 0) {
+      this.formError.set(unmatched.join(' '));
+
+      return;
+    }
 
     if (Object.keys(errors).length === 0) {
       this.formError.set(body?.message ?? this.locale.translate('products.saveFailed'));
@@ -271,6 +291,10 @@ export class ProductFormComponent implements OnInit {
 
     if (control.hasError('required')) {
       return this.locale.translate('common.requiredField');
+    }
+
+    if (control.hasError('maxlength')) {
+      return this.locale.translate('common.maxLength');
     }
 
     return control.hasError('min') ? this.locale.translate('products.minZero') : null;
