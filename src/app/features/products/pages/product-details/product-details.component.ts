@@ -55,6 +55,17 @@ export class ProductDetailsComponent implements OnInit {
   readonly primaryImage = computed<ProductImage | null>(
     () => this.images().find((image) => image.is_primary) ?? this.images()[0] ?? null,
   );
+
+  /** Null means "whichever is primary" — the strip has not been clicked yet. */
+  readonly selectedImageId = signal<number | null>(null);
+
+  readonly activeImage = computed<ProductImage | null>(() => {
+    const selected = this.selectedImageId();
+
+    return (
+      this.images().find((image) => image.id === selected) ?? this.primaryImage()
+    );
+  });
   readonly loading = signal(true);
   readonly missing = signal(false);
   readonly failed = signal(false);
@@ -78,6 +89,7 @@ export class ProductDetailsComponent implements OnInit {
     this.loading.set(true);
     this.missing.set(false);
     this.failed.set(false);
+    this.selectedImageId.set(null);
 
     this.products.getById(id).subscribe({
       next: (product) => {

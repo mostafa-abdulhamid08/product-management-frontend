@@ -126,7 +126,8 @@
     "selectCategory": "Select a category",
     "activeLabel": "Active",
     "saveFailed": "Could not save this product. Please try again.",
-    "minZero": "Enter a value of 0 or more."
+    "minZero": "Enter a value of 0 or more.",
+    "showImage": "Show image {position}"
   },
   "categories": {
     "title": "Categories",

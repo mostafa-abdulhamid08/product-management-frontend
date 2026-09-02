@@ -134,6 +134,17 @@ body {
     unicode-bidi: isolate;
   }
 
+  .thumb {
+    @apply block size-14 cursor-pointer overflow-hidden rounded-sm border border-border bg-surface p-0 transition-colors;
+    @apply hover:border-text-muted active:opacity-80;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border;
+  }
+
+  .thumb.is-current {
+    @apply border-primary ring-1 ring-primary;
+  }
+
   .sr-only {
     @apply absolute size-px overflow-hidden whitespace-nowrap;
     clip-path: inset(50%);

@@ -47,19 +47,40 @@
   </app-page-header>
 
   <div class="flex flex-wrap gap-8 rounded-md border border-border bg-surface p-6">
-    @if (primaryImage(); as image) {
-      <img
-        [src]="image.url"
-        [alt]="item.name | tx"
-        class="size-64 rounded-md border border-border object-cover"
-      />
-    } @else {
-      <div
-        class="flex size-64 items-center justify-center rounded-md border border-border bg-bg text-body text-text-muted"
-      >
-        {{ 'products.noImage' | t }}
-      </div>
-    }
+    <div class="w-64 shrink-0">
+      @if (activeImage(); as image) {
+        <img
+          [src]="image.url"
+          [alt]="item.name | tx"
+          class="aspect-square w-full rounded-md border border-border object-cover"
+        />
+
+        @if (images().length > 1) {
+          <ul class="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
+            @for (thumb of images(); track thumb.id) {
+              <li>
+                <button
+                  type="button"
+                  class="thumb"
+                  [class.is-current]="thumb.id === image.id"
+                  [attr.aria-current]="thumb.id === image.id ? 'true' : null"
+                  [attr.aria-label]="'products.showImage' | t: { position: thumb.order }"
+                  (click)="selectedImageId.set(thumb.id)"
+                >
+                  <img [src]="thumb.thumb_url" alt="" class="size-full object-cover" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <div
+          class="flex aspect-square w-full items-center justify-center rounded-md border border-border bg-bg text-body text-text-muted"
+        >
+          {{ 'products.noImage' | t }}
+        </div>
+      }
+    </div>
 
     <dl class="m-0 grid min-w-72 flex-1 grid-cols-[auto_1fr] items-start gap-x-8 gap-y-3">
       <dt class="text-body font-medium text-text-secondary">{{ 'products.category' | t }}</dt>

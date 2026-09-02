@@ -126,7 +126,8 @@
     "selectCategory": "اختر فئة",
     "activeLabel": "نشط",
     "saveFailed": "تعذر حفظ هذا المنتج. من فضلك حاول مرة أخرى.",
-    "minZero": "أدخل قيمة 0 أو أكبر."
+    "minZero": "أدخل قيمة 0 أو أكبر.",
+    "showImage": "عرض الصورة {position}"
   },
   "categories": {
     "title": "الفئات",
