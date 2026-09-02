@@ -2,6 +2,8 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, firstValueFrom, of, tap } from 'rxjs';
 
+import { TranslatedText } from '../models/translated-text.model';
+
 export type Locale = 'en' | 'ar';
 
 export const LOCALES: Locale[] = ['en', 'ar'];
@@ -81,6 +83,36 @@ export class LocaleService {
       (text, [name, replacement]) => text.replaceAll(`{${name}}`, String(replacement)),
       value,
     );
+  }
+
+  /**
+   * Picks the current language out of a bilingual catalogue field, falling back
+   * to the other language when this one is empty.
+   *
+   * The fallback is the point. A row translated in one language only would
+   * otherwise render as a blank cell, and a blank cell reads as a broken record
+   * rather than as missing text. Showing the language we have is honest and
+   * still tells the reader something.
+   *
+   * The pipe form is `tx`; this is the same thing for TypeScript, where toasts
+   * and confirmation messages need a product's name as a plain string.
+   */
+  text(value: TranslatedText | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const current = value[this._locale()];
+
+    if (current !== null && current !== undefined && current.trim() !== '') {
+      return current;
+    }
+
+    const fallback = value[this._locale() === 'en' ? 'ar' : 'en'];
+
+    return fallback !== null && fallback !== undefined && fallback.trim() !== ''
+      ? fallback
+      : '';
   }
 
   private applyToDocument(locale: Locale): void {
