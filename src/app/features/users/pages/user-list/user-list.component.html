@@ -64,6 +64,13 @@
   (clearFilters)="clearFilters()"
   (pageChange)="onPage($event)"
 >
+    <th
+      actionsHeader
+      class="w-36 px-4 py-3 text-end font-medium"
+    >
+      {{ 'common.actions' | t }}
+    </th>
+
   <a *hasPermission="'users.create'" emptyAction class="btn-primary" routerLink="/users/create">
     {{ 'users.add' | t }}
   </a>

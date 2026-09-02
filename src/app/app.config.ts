@@ -1,9 +1,12 @@
 import {
   ApplicationConfig,
   inject,
+  LOCALE_ID,
   provideAppInitializer,
   provideZoneChangeDetection,
 } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeAr from '@angular/common/locales/ar';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
@@ -14,6 +17,8 @@ import { progressInterceptor } from './core/interceptors/progress.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { LocaleService } from './core/services/locale.service';
 import { routes } from './app.routes';
+
+registerLocaleData(localeAr);
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,6 +32,11 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
     provideRouter(routes, withComponentInputBinding()),
+
+    // DatePipe formats by LOCALE_ID, which is fixed for the life of the app.
+    // That is fine here precisely because switching language reloads: the new
+    // choice is already in storage by the time this runs.
+    { provide: LOCALE_ID, useFactory: () => inject(LocaleService).preferred() },
 
     // App initializers settle before the router's first navigation, which is
     // what the layout guards depend on: they read permissions synchronously.

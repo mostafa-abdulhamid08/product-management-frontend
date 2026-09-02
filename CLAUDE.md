@@ -156,45 +156,80 @@ work. Build it properly and copy its shape.
 - Don't create documentation or summary files unless I ask.
 - Verify against the running API, not against assumptions. The backend is
   complete and its Postman collection documents every response shape.
-- After completing any step, update the `## Current status
+- After completing any step, update the `## Current status` section below to
+  reflect what now exists and what the next step is. Do this without being
+  asked — a stale status section is worse than none, because the next session
+  starts from a wrong picture.
 
-**All seven build-order steps are done. Nothing in `README.md` is unbuilt.**
+## Environment
 
-1-3: the two layouts and the `canMatch` skeleton; login, `AuthService` HTTP, the
-interceptors, `restoreSession` in `provideAppInitializer`; the `hasPermission`
-directive and the permission-filtered sidebar.
+The Laravel API runs on `http://localhost:8000` via `php artisan serve`, not
+on its Herd `.test` domain. That is deliberate: `SameSite=lax` session cookies
+are only sent between hosts sharing a registrable domain, and
+`localhost:4200` and `product-management-api.test` do not. Both sides must sit
+under `localhost`.
 
-4-6: Products end to end; Categories, Users and Roles; `data-table` extracted and all
-four lists refactored onto it; the permission-driven Dashboard; real 403 and 404.
+`upload_tmp_dir` must be set in the PHP ini that serves the API. Without it PHP
+cannot create the temporary file for an upload and every image comes back
+`The image failed to upload.`, with a raw PHP warning prepended to the JSON.
 
-7: **i18n** — `public/i18n/en.json` and `ar.json`, the impure `t` pipe in
-`core/pipes/`, and a topbar switcher that reloads so one language shows at a time.
-`shared/` takes every label as an input, since it cannot import `core/`. **RTL** via
-logical utilities throughout, with `rtl:` variants for the few things that mirror by
-direction. **A global loading bar** — `ProgressService` counts in-flight HTTP
-(a counter, not a boolean) and watches router navigation, shows after 150ms, sits
-above modals in `--color-primary`; the dumb bar lives in `shared/`.
+Seeded login: `admin@example.com` / `password`. `DemoDataSeeder` adds five more,
+all with the same password: `manager@` (product-manager), `editor@`
+(product-editor), `inventory@` (inventory-staff), `viewer@` (viewer), and
+`deactivated@` (product-manager, `is_active` false).
 
-Verified in the browser against localhost:8000: the whole panel in English and in
-Arabic RTL, including the API's own status labels and role display names; the
-switcher round-tripping both ways with no mixed-language screen; the loading bar
-rendering at the top above the topbar; all four list states; and the interactive-state
-audit below.
+## Current status
 
-Every shared control class carries default, hover, active, focus-visible and disabled
-(`.field` uses `focus:` rather than `focus-visible:`, which is right for a text
-input). The sweep after the `data-table` extraction found three gaps — the roles
-expand button, the roles column select-all, and the dashboard links had no
-focus-visible or active state — all now fixed.
+**The frontend is complete.** Every screen in `README.md` exists, every step of the
+build order is done, and there is no outstanding work. What follows is orientation
+for whoever picks it up next, not a to-do list.
 
-Two things worth knowing before changing them: the `t` pipe is impure on purpose
-(its key never changes, so a pure pipe would never re-run when the locale does), and
-the language switch reloads on purpose (API-worded strings would otherwise stay in
-the previous language until each screen happened to refetch).
+### What is here
 
-Only one seeded account is an admin. `viewer@example.com` and the other four demo
-accounts all use password `password`.
+Angular 19.2, standalone, zone-based change detection. Tailwind 4.3 with the design
+tokens in a `@theme` block in `src/styles.css`, alongside the shared control classes
+(`.btn-primary`, `.btn-quiet`, `.btn-danger-text`, `.field`, `.icon-btn`, `.page-btn`,
+`.toggle`, `.ratio`).
 
-Next: nothing outstanding. Candidates if you want them — Arabic copy review by a
-native speaker, a `docs/` note on adding a language, and tests whenever you lift the
-no-tests rule.
+Two shells chosen by `canMatch`; login with the `/me` bootstrap in
+`provideAppInitializer`; four interceptors (credentials, locale, progress, error);
+the `hasPermission` directive and a permission-filtered sidebar; Products, Categories,
+Users and Roles end to end; a permission-driven Dashboard; real 403 and 404; English
+and Arabic with full RTL; and a global loading bar.
+
+Shared: `data-table`, `page-header`, `pagination`, `status-badge`, `confirm-dialog`,
+`empty-state`, `table-skeleton`, `toast-host`, `progress-bar`, and `pipes/price.pipe.ts`.
+
+### Decisions that look wrong until you know why
+
+- **`adminGuard` returns a bare `false`, never a `UrlTree`.** Falling through is the
+  mechanism that lets the catalog shell pick up the user the admin shell declined.
+- **`catalogFallbackGuard` gates the catalog layout's 403 catch-all.** Without it an
+  admin's typo lands in the catalog shell and reads "not yours" about a page that is
+  nobody's, instead of a truthful 404.
+- **The `t` pipe is impure.** Its key never changes, so a pure pipe would never re-run
+  when the locale does.
+- **Switching language reloads the page.** API-worded strings would otherwise stay in
+  the previous language until each screen happened to refetch, leaving half a screen
+  in each.
+- **`LOCALE_ID` comes from the stored preference.** That is safe precisely because the
+  switch reloads; it is what makes `DatePipe` format in Arabic.
+- **Numeric ratios are wrapped in `.ratio`.** Two LTR numbers around a neutral slash
+  get reordered in an RTL paragraph, so `2 / 4` renders as `4 / 2` without the isolate.
+- **The Actions column is projected, not configured.** Gating it with `*hasPermission`
+  through the `actionsHeader` slot keeps permission strings in their four homes; a
+  `columns` flag would have been a fifth.
+- **`shared/` takes every label as an input.** It cannot import `core/`, so it cannot
+  translate; the defaults are English and every feature overrides them.
+- **The roles form builds `resource.action` strings.** That is payload being sent back,
+  not a gate being checked, so it is not a fifth home for permission strings.
+
+### Known limitations
+
+- The native file input renders its own "Choose File / No file chosen" chrome in the
+  browser's language. Replacing it means a custom control over a hidden input.
+- If an upload fails server-side, PHP may prepend an HTML warning to the JSON, which
+  makes the 422 unparseable — the form then shows its generic error rather than the
+  specific reason.
+- The Arabic copy has not been reviewed by a native speaker.
+- There are no tests, per the standing rule in this file.

@@ -43,6 +43,14 @@
   (clearFilters)="clearFilters()"
   (pageChange)="onPage($event)"
 >
+    <th
+      actionsHeader
+      *hasPermission="['categories.update', 'categories.delete']"
+      class="w-24 px-4 py-3 text-end font-medium"
+    >
+      {{ 'common.actions' | t }}
+    </th>
+
   <a
     *hasPermission="'categories.create'"
     emptyAction
@@ -57,7 +65,10 @@
       <td class="px-4 py-3 text-text">{{ category.name }}</td>
       <td class="px-4 py-3 text-text-secondary">{{ category.description || ('common.none' | t) }}</td>
       <td class="px-4 py-3 text-end text-text tabular-nums">{{ category.products_count }}</td>
-      <td class="px-4 py-3">
+      <td
+        *hasPermission="['categories.update', 'categories.delete']"
+        class="px-4 py-3"
+      >
         <div class="flex items-center justify-end gap-1">
           <a
             *hasPermission="'categories.update'"

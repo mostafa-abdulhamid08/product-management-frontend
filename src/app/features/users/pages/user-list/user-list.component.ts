@@ -67,7 +67,6 @@ export class UserListComponent implements OnInit {
     { label: this.locale.translate('common.email') },
     { label: this.locale.translate('common.role') },
     { label: this.locale.translate('common.status'), width: 'w-28' },
-    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-36' },
   ]);
 
   /** The backend refuses these too; hiding them first saves a pointless 422. */

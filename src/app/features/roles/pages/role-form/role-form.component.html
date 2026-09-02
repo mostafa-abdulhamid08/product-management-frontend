@@ -76,8 +76,9 @@
         <div class="rounded-md border border-border bg-surface p-6">
           <div class="mb-4 flex items-baseline justify-between gap-4">
             <p class="m-0 text-body font-medium text-text">{{ 'roles.permissions' | t }}</p>
-            <p class="m-0 text-meta text-text-muted tabular-nums">
-              {{ 'roles.selectedCount' | t: { selected: selectedCount(), total: totalCount() } }}
+            <p class="m-0 text-meta text-text-muted">
+              <span class="ratio">{{ selectedCount() }} / {{ totalCount() }}</span>
+              {{ 'roles.selectedSuffix' | t }}
             </p>
           </div>
 

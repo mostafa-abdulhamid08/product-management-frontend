@@ -58,7 +58,6 @@ export class CategoryListComponent implements OnInit {
     { label: this.locale.translate('categories.category') },
     { label: this.locale.translate('common.description') },
     { label: this.locale.translate('categories.productsCount'), align: 'end', width: 'w-28' },
-    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-24' },
   ]);
 
   constructor() {

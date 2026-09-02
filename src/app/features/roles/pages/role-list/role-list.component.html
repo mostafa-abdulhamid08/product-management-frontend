@@ -21,6 +21,14 @@
   (retry)="load()"
   (pageChange)="onPage($event)"
 >
+    <th
+      actionsHeader
+      *hasPermission="['roles.update', 'roles.delete']"
+      class="w-24 px-4 py-3 text-end font-medium"
+    >
+      {{ 'common.actions' | t }}
+    </th>
+
   <a *hasPermission="'roles.create'" emptyAction class="btn-primary" routerLink="/roles/create">
     {{ 'roles.add' | t }}
   </a>
@@ -58,14 +66,17 @@
       </td>
 
       @for (action of actions(); track action) {
-        <td class="px-4 py-3 text-center text-text-secondary tabular-nums">
-          {{ actionCount(role, action) }} / {{ resourceCount() }}
+        <td class="px-4 py-3 text-center text-text-secondary">
+          <span class="ratio">{{ actionCount(role, action) }} / {{ resourceCount() }}</span>
         </td>
       }
 
       <td class="px-4 py-3 text-end text-text tabular-nums">{{ role.users_count }}</td>
 
-      <td class="px-4 py-3">
+      <td
+        *hasPermission="['roles.update', 'roles.delete']"
+        class="px-4 py-3"
+      >
         <div class="flex items-center justify-end gap-1">
           <a
             *hasPermission="'roles.update'"
@@ -123,7 +134,7 @@
 
     @if (expandedId() === role.id) {
       <tr class="border-b border-border bg-bg">
-        <td class="px-4 py-4" [attr.colspan]="columns().length">
+        <td class="px-4 py-4" [attr.colspan]="columns().length + 1">
           <table class="w-full max-w-2xl border-collapse text-table">
             <thead>
               <tr class="text-meta text-text-secondary">

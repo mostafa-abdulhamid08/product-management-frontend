@@ -1,6 +1,7 @@
 {
-  "app": { "name": "Product Management" },
-
+  "app": {
+    "name": "Product Management"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "products": "Products",
@@ -8,14 +9,12 @@
     "users": "Users",
     "roles": "Roles"
   },
-
   "topbar": {
     "logout": "Log out",
     "language": "Language",
     "english": "English",
     "arabic": "العربية"
   },
-
   "common": {
     "actions": "Actions",
     "back": "Back",
@@ -47,7 +46,6 @@
     "genericError": "Something went wrong. Please try again.",
     "loadFailed": "The request did not come back. It may be a connection problem."
   },
-
   "login": {
     "title": "Sign in",
     "email": "Email",
@@ -64,7 +62,6 @@
     "failed": "Could not sign in. Please try again.",
     "deactivated": "This account has been deactivated."
   },
-
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Where the catalog stands today.",
@@ -82,7 +79,6 @@
       "roles": "Roles"
     }
   },
-
   "products": {
     "title": "Products",
     "subtitle": "Everything in the catalog.",
@@ -128,7 +124,6 @@
     "saveFailed": "Could not save this product. Please try again.",
     "minZero": "Enter a value of 0 or more."
   },
-
   "categories": {
     "title": "Categories",
     "subtitle": "How the catalog is grouped.",
@@ -158,7 +153,6 @@
     "save": "Save category",
     "saveFailed": "Could not save this category. Please try again."
   },
-
   "users": {
     "title": "Users",
     "subtitle": "Who can sign in, and what they can do.",
@@ -202,7 +196,6 @@
     "emailInvalid": "Enter a valid email address.",
     "saveFailed": "Could not save this user. Please try again."
   },
-
   "roles": {
     "title": "Roles",
     "subtitle": "What each role is allowed to do.",
@@ -236,7 +229,6 @@
     "namePlaceholder": "e.g. warehouse-staff",
     "nameHint": "This is the key the API matches on. Lower case, no spaces.",
     "permissions": "Permissions",
-    "selectedCount": "{selected} / {total} selected",
     "all": "All",
     "toggleColumn": "Toggle {action} for every resource",
     "toggleRow": "Toggle every action for {resource}",
@@ -253,9 +245,9 @@
       "categories": "Categories",
       "users": "Users",
       "roles": "Roles"
-    }
+    },
+    "selectedSuffix": "selected"
   },
-
   "errors": {
     "forbidden": {
       "code": "403",

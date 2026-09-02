@@ -63,7 +63,6 @@ export class RoleListComponent implements OnInit {
       width: 'w-24',
     })),
     { label: this.locale.translate('roles.usersCount'), align: 'end', width: 'w-20' },
-    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-24' },
   ]);
 
   /**

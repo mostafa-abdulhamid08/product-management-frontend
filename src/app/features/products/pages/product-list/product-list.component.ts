@@ -67,7 +67,6 @@ export class ProductListComponent implements OnInit {
     { label: this.locale.translate('products.price'), align: 'end' },
     { label: this.locale.translate('products.stock'), align: 'end' },
     { label: this.locale.translate('common.status') },
-    { label: this.locale.translate('common.actions'), align: 'end', width: 'w-28' },
   ]);
 
   constructor() {

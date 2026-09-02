@@ -125,6 +125,15 @@ body {
     @apply border-primary bg-primary-subtle font-medium text-primary;
   }
 
+  /* "2 / 4" is two LTR numbers around a neutral slash. In an RTL paragraph the
+     bidi algorithm reorders them and it renders as "4 / 2" — the wrong way round.
+     Isolate the run so the ratio keeps its own direction. */
+  .ratio {
+    @apply inline-block tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
   .sr-only {
     @apply absolute size-px overflow-hidden whitespace-nowrap;
     clip-path: inset(50%);

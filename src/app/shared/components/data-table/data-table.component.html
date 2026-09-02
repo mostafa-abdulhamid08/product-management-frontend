@@ -29,6 +29,9 @@
             @for (column of columns(); track column.label) {
               <th [class]="headerClass(column)">{{ column.label }}</th>
             }
+            <!-- Projected so the feature can gate it with *hasPermission; a user
+                 with no row action gets no column rather than an empty one. -->
+            <ng-content select="[actionsHeader]" />
           </tr>
         </thead>
         <tbody>
