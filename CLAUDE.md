@@ -180,22 +180,10 @@ all with the same password: `manager@` (product-manager), `editor@`
 
 ## Current status
 
-**Every screen in `README.md` exists and every step of the build order is done.**
-Two backend changes are being folded in on top of that. Data localization is done;
-multiple product images is the next task and is not started.
-
-### Outstanding: multiple product images
-
-The API has dropped `image_path` for a Media Library gallery — up to eight images per
-product, exactly one primary. List rows and `recent_products` carry
-`primary_image_url`; the details endpoint carries an `images` array of
-`{ id, url, thumb_url, is_primary, order }`. Five endpoints under
-`/api/products/{id}/images`, all gated by `products.update`. Two business rules to
-surface: no ninth image, and the last image cannot be deleted.
-
-Until that lands, `Product` still declares the dead `image_path` and `image_url`
-fields and every product renders the no-image placeholder, because the API no longer
-sends either key.
+**The frontend is complete and current with the API.** Every screen in `README.md`
+exists, every step of the build order is done, and both backend changes that landed
+after it — the bilingual catalogue and the multi-image gallery — are folded in. What
+follows is orientation for whoever picks it up next, not a to-do list.
 
 ### What is here
 
@@ -203,6 +191,13 @@ Angular 19.2, standalone, zone-based change detection. Tailwind 4.3 with the des
 tokens in a `@theme` block in `src/styles.css`, alongside the shared control classes
 (`.btn-primary`, `.btn-quiet`, `.btn-danger-text`, `.field`, `.icon-btn`, `.page-btn`,
 `.toggle`, `.ratio`).
+
+A product holds up to eight images through Media Library, exactly one of them
+primary. A list row and the dashboard carry only `primary_image_url`; the details
+endpoint carries the whole `images` array. Details renders a large primary with a
+thumbnail strip under it; the create form uploads the set with the product itself;
+the edit screen manages the gallery through the five `/api/products/{id}/images`
+endpoints, one request per action.
 
 Product and category `name` and `description` are bilingual: the API stores and
 returns both languages at once as `{ en, ar }`, and the shape does not vary with
@@ -239,6 +234,19 @@ Shared: `data-table`, `page-header`, `pagination`, `status-badge`, `confirm-dial
 - **The Actions column is projected, not configured.** Gating it with `*hasPermission`
   through the `actionsHeader` slot keeps permission strings in their four homes; a
   `columns` flag would have been a fifth.
+- **The gallery is not a form field.** Every image action on the edit screen fires
+  its own request and lands immediately, rather than queueing until Save. An upload
+  cannot wait for a button the user may never press, and the API answers every write
+  with the whole collection, so the panel redraws from the response.
+- **The product form never sends `images` on update.** Sending it replaces the entire
+  collection and deletes the files it replaces. Create sends it; edit uses the image
+  endpoints instead.
+- **The delete button stays enabled on the last image.** The API refuses it and words
+  the refusal; a disabled button would be silent about why. Same reasoning as the
+  category that still holds products.
+- **The primary is not necessarily the first image.** `is_primary` is a flag on the
+  media row and the order is a separate column, so the list thumbnail and the large
+  image on details both come from `is_primary`, never from `images[0]`.
 - **`tx` lives in `core/pipes/`, not `shared/pipes/`, unlike `price`.** It injects
   `LocaleService` to know which language to resolve, and `shared/` may not import
   `core/`. The dividing line is the service dependency, not the fact that it is a pipe.
@@ -261,6 +269,10 @@ Shared: `data-table`, `page-header`, `pagination`, `status-badge`, `confirm-dial
 
 - The native file input renders its own "Choose File / No file chosen" chrome in the
   browser's language. Replacing it means a custom control over a hidden input.
+- Reordering is up/down buttons, not drag and drop. Every move is a full reorder
+  request, so dragging several images is several round trips.
+- Deleting an image on the edit screen takes effect immediately with no confirmation
+  step, unlike deleting a product or a category.
 - If an upload fails server-side, PHP may prepend an HTML warning to the JSON, which
   makes the 422 unparseable — the form then shows its generic error rather than the
   specific reason.
