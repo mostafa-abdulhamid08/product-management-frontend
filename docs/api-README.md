@@ -8,6 +8,60 @@ The Angular SPA that consumes this API lives in a separate repository.
 
 ---
 
+## First-time setup
+
+**Prerequisites:** PHP 8.3 or newer, Composer, MySQL, and the `gd`, `exif`,
+`fileinfo` and `mbstring` PHP extensions — Media Library needs them to store
+images and build thumbnails.
+
+```bash
+git clone https://github.com/mostafa-abdulhamid08/product-management-api.git
+cd product-management-api
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+Open `.env` and set your database credentials. The defaults are
+`DB_DATABASE=product_management`, `DB_USERNAME=root`, `DB_PASSWORD=` (empty).
+Create that database first — or leave it missing and `migrate` will offer to
+create it for you.
+
+```bash
+php artisan storage:link
+php artisan migrate --seed
+php artisan serve
+```
+
+The API is now running on `http://localhost:8000`.
+
+**Use `php artisan serve`, not a custom domain.** `.env.example` ships with
+`APP_URL=http://localhost:8000` and `SESSION_DOMAIN=localhost`, and the session
+cookie only comes back if the host matches. Serving the app from, say,
+`myapp.test` without updating both values makes login fail with a `419`.
+
+### Trying it out
+
+**There is no web interface here.** This repository is a JSON API — opening
+`http://localhost:8000` in a browser shows Laravel's default welcome page,
+not a login form. The admin panel is the Angular SPA in its own repository.
+
+The quickest way in is the Postman collection committed at the repository root:
+
+1. Import `product-management-api.postman_collection.json`.
+2. Send **`0. Setup → Get CSRF cookie`**.
+3. Send **`0. Setup → Login`** — `admin@example.com` / `password`.
+
+Both steps are needed. Sanctum runs in **SPA cookie mode**, so a write request
+has to carry the `XSRF-TOKEN` cookie back as an `X-XSRF-TOKEN` header; the
+collection's scripts do that for you, which is why a bare `curl` POST to
+`/api/login` returns `419` on its own. Everything else in the collection works
+once you are signed in.
+
+Every seeded account and its role is listed under [Seeders](#seeders).
+
+---
+
 ## Tech stack
 
 | Concern | Choice |
@@ -16,6 +70,7 @@ The Angular SPA that consumes this API lives in a separate repository.
 | Database | MySQL |
 | Authentication | Laravel Sanctum (SPA cookie mode) |
 | Authorization | `spatie/laravel-permission` (middleware, not policies) |
+| Product images | `spatie/laravel-medialibrary` |
 | API style | REST, JSON only |
 
 ---
@@ -163,6 +218,7 @@ app/
 │   │       ├── AuthController.php
 │   │       ├── DashboardController.php
 │   │       ├── ProductController.php
+│   │       ├── ProductImageController.php
 │   │       ├── CategoryController.php
 │   │       ├── UserController.php
 │   │       └── RoleController.php
@@ -269,25 +325,53 @@ There is **no `type` column**. A user's role is the single source of truth for w
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| name | string, unique | |
-| description | text, nullable | |
+| name_en | string, unique | |
+| name_ar | string, unique | |
+| description_en | text, nullable | |
+| description_ar | text, nullable | |
 | timestamps | | |
 
 `products_count` is never stored — it is derived with `withCount('products')`.
+
+There is no `name` column. Both languages are required on write, and each is
+unique in its own column — the guarantee the single `name` column used to carry,
+now applied per language. `$category->name` still works: it is an accessor that
+resolves to the current locale. See [Data localization](#data-localization).
 
 ### `products`
 
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| name | string | |
-| description | text, nullable | |
+| name_en | string, indexed | |
+| name_ar | string, indexed | |
+| description_en | text, nullable | |
+| description_ar | text, nullable | |
 | price | decimal(10,2) | |
 | stock | unsigned integer, default 0 | |
-| image_path | string, nullable | stored on the `public` disk |
 | is_active | boolean, default true | drives the Active / Inactive badge |
 | category_id | FK → categories, restrict on delete | |
 | timestamps | | |
+
+As with categories there is no `name` column, both languages are required on
+write, and `$product->name` is a locale-resolving accessor. Both name columns are
+indexed because the search filter tests both. See
+[Data localization](#data-localization).
+
+**There is no `image_path` column.** A product holds up to eight images, and they
+live in the `media` table that `spatie/laravel-medialibrary` owns — one row per
+image, `model_type` / `model_id` pointing back at the product, `collection_name`
+always `images`. Two of that table's columns carry meaning for us:
+
+| Column | Holds |
+|---|---|
+| `order_column` | the position in the gallery, 1-based |
+| `custom_properties` | `{"is_primary": true}` on exactly one row per product |
+
+Files land on the `public` disk under `{media_id}/{file_name}`, with the `thumb`
+conversion beside them in `{media_id}/conversions/`. Do not add columns to that
+table; it is the package's. See
+[Product images use Spatie Media Library](#product-images-use-spatie-media-library).
 
 ### Spatie tables
 
@@ -373,11 +457,18 @@ Never treat a hidden button as a security control.
 
 ## Localization
 
-The API answers in **English or Arabic**. Everything the *system* writes is
-translated — validation errors, business-rule refusals, auth failures, role
-display names, status labels. Everything the *user* typed is not: a product
-called `Laptop` comes back as `Laptop` in both languages. There are no
-`name_en` / `name_ar` columns and none are planned for now.
+The API answers in **English or Arabic**, and it localizes two different things.
+
+*Interface localization* covers everything the **system** writes — validation
+errors, business-rule refusals, auth failures, role display names, status labels.
+The `Accept-Language` header picks the language and the text comes from `lang/`.
+
+*Data localization* covers the part of the **catalogue** that is prose: a
+product's and a category's name and description are stored in both languages and
+returned in both. See [Data localization](#data-localization) below.
+
+Everything else a user typed stays single-value — an email is an email, a price
+is a price.
 
 ### Choosing the language
 
@@ -419,8 +510,12 @@ throw new InactiveAccountException;          // 'This account has been deactivat
 __('You cannot delete your own account.');
 ```
 
-That covers all twelve business-rule refusals, the auth messages, and the 401 /
-404 sentences. Two of Laravel's own and four of `spatie/laravel-permission`'s
+That covers all fourteen business-rule refusals, the auth messages, and the 401 /
+404 sentences. Twelve of the fourteen predate images; the two the image endpoints
+added are "a product must keep at least one image" and "a product cannot hold more
+than eight". A fifteenth sentence, "Image :ids does not belong to this product",
+guards the media ids a reorder or a delete names — a safety check on ownership
+rather than a rule about the catalogue, but translated the same way. Two of Laravel's own and four of `spatie/laravel-permission`'s
 messages land here too, because both packages already call `__()` with an
 English sentence as the key — the 403 you get from `permission:` middleware is
 translated purely by having `"User does not have the right permissions."` in
@@ -506,6 +601,81 @@ column for roles `enums.php` does not know.
 4. Identifiers interpolated *into* a sentence — a role key, a permission
    string — stay untranslated, so the caller can still find what they sent.
 
+### Data localization
+
+Interface localization translates what the application says. Data localization
+stores what the *catalogue* says in two languages. It covers exactly four
+columns on two tables:
+
+| Table | Translated | Not translated |
+|---|---|---|
+| `products` | `name_en`, `name_ar`, `description_en`, `description_ar` | price, stock, image, status, category |
+| `categories` | `name_en`, `name_ar`, `description_en`, `description_ar` | — |
+
+Nothing else is, and the omissions are deliberate:
+
+- **Users are people.** A person's name is not a string with an English version
+  and an Arabic one; it is what they are called. `users.name` stays a single
+  column, and so do email and password.
+- **Role display names already have a home.** They are a fixed set of five known
+  labels, not user-entered prose, so they live in `lang/{locale}/enums.php`
+  keyed by the role key — see [Roles: the key is not the
+  label](#roles-the-key-is-not-the-label). A role created through the API has no
+  entry there and falls back to the `roles.description` column.
+- **Everything else is not prose.** Prices, stock counts, dates, image paths and
+  ids read the same in both languages.
+
+**Separate columns, not a translations table.** Four columns on the row itself
+keep the search filter a plain `where` on the same table, keep `firstOrCreate`
+usable in the seeder, and keep the whole feature in stock Eloquent — no join, no
+package. `spatie/laravel-translatable` exists and is deliberately not used. Two
+languages that are both required do not need the flexibility a translations
+table buys.
+
+**Both languages are required on write.** `name_en` and `name_ar` are `required`
+on create and `sometimes|required` on update, so a partial edit need not resend
+both but neither may arrive blank. A half-translated catalogue is worse than an
+untranslated one: it renders as an empty cell in one language with nothing to
+tell the reader whether the row is broken or the text is genuinely missing. The
+descriptions stay nullable, matching what they were before.
+
+**Reading: an accessor for the inside, a Resource for the outside.** Both models
+carry a `getNameAttribute()` / `getDescriptionAttribute()` pair that reads
+`App::getLocale()` and returns that language's column, falling back to English
+when it is empty. So `$product->name` keeps working everywhere it worked before
+— seeders, filters, anything the API does not reach.
+
+The API does *not* use that accessor. `ProductResource` and `CategoryResource`
+return both languages under one key:
+
+```json
+"name":        { "en": "Dell Laptop", "ar": "لابتوب ديل" },
+"description": { "en": "...",         "ar": "..." }
+```
+
+One key per concept, not two flat fields. The edit form renders its two inputs
+from a single fetch, the list picks `name[currentLocale]` at render time, and the
+shape does not change with `Accept-Language` — only the system's own messages in
+the same response do.
+
+**Searching matches either language.** `ProductRepository` and
+`CategoryRepository` test `name_en` and `name_ar` inside one grouped `where`:
+
+```php
+->where(function ($query) use ($search) {
+    $query->where('name_en', 'like', "%{$search}%")
+        ->orWhere('name_ar', 'like', "%{$search}%");
+})
+```
+
+The grouping is load-bearing. Ungrouped, the `orWhere` escapes the search filter
+and the category and status filters beside it stop applying.
+
+**A rollback flattens Arabic.** The `down()` methods copy `name_en` back into
+`name` and drop the rest, so the table stays usable by the old code — but the
+Arabic text is gone, and migrating forward again fills `name_ar` from `name`.
+Rolling back is safe for the schema, lossy for the translations.
+
 ---
 
 ## API contract
@@ -521,8 +691,12 @@ exactly. Leave it that way; Angular parses it for display.
 Single resource:
 
 ```json
-{ "data": { "id": 1, "name": "Laptop" } }
+{ "data": { "id": 1, "name": { "en": "Laptop", "ar": "لابتوب" } } }
 ```
+
+Product and category `name` and `description` are objects carrying both
+languages, not strings. Nothing else is — see
+[Data localization](#data-localization).
 
 Paginated list:
 
@@ -638,25 +812,118 @@ The response is **built from the caller's permissions**. A count is omitted enti
 | POST | `/api/products/{id}` | `products.update` |
 | DELETE | `/api/products/{id}` | `products.delete` |
 
-Query params on index: `search` (name), `category_id`, `status` (`active` / `inactive`), `page`, `per_page`. Filtering belongs in `ProductRepository::paginateWithFilters()`.
+Query params on index: `search` (name, either language), `category_id`, `status` (`active` / `inactive`), `page`, `per_page`. Filtering belongs in `ProductRepository::paginateWithFilters()`.
+
+`search` matches `name_en` **or** `name_ar`, so a term present in only one of them
+still finds the row. The two `orWhere`s sit inside their own grouped `where`;
+ungrouped, the OR would escape the search filter and swallow the category and
+status conditions beside it.
 
 Update uses `POST` with `_method=PUT` because the image is sent as multipart form data.
+
+`name` and `description` come back as one key per concept carrying both languages:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name":        { "en": "Dell Inspiron 15 3520", "ar": "لابتوب ديل إنسبايرون 15 3520" },
+    "description": { "en": "Core i5 12th gen, ...",  "ar": "معالج كور i5 الجيل الثاني عشر، ..." },
+    "price": "27499.00",
+    "status_label": "Active",
+    "category": { "id": 1, "name": { "en": "Laptops", "ar": "أجهزة لابتوب" } }
+  }
+}
+```
+
+The shape does not vary with `Accept-Language`: the header picks the language of
+what the *system* writes — `status_label` here — while the catalogue text always
+arrives in both, because the edit form needs both to render its two inputs and
+the list picks `name[locale]` at render time.
+
+**The list and the details endpoints differ in one field.** A row from
+`GET /api/products` — and from the dashboard's `recent_products` — carries
+`primary_image_url`, the primary image's thumbnail or `null`, in place of the
+`images` array. A page of fifteen products would otherwise ship up to a hundred
+and twenty image objects to render fifteen thumbnails. `ProductCollection` marks
+its rows and `ProductResource` swaps the two keys.
 
 **Validation** — store:
 
 ```php
-'name'        => ['required', 'string', 'max:255'],
-'description' => ['nullable', 'string'],
-'price'       => ['required', 'numeric', 'min:0'],
-'stock'       => ['required', 'integer', 'min:0'],
-'category_id' => ['required', 'exists:categories,id'],
-'image'       => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
-'is_active'   => ['boolean'],
+'name_en'        => ['required', 'string', 'max:255'],
+'name_ar'        => ['required', 'string', 'max:255'],
+'description_en' => ['nullable', 'string'],
+'description_ar' => ['nullable', 'string'],
+'price'          => ['required', 'numeric', 'min:0'],
+'stock'          => ['required', 'integer', 'min:0'],
+'category_id'    => ['required', 'exists:categories,id'],
+'images'         => ['nullable', 'array', 'max:8'],
+'images.*'       => ['image', 'mimes:png,jpg,jpeg', 'max:2048'],
+'is_active'      => ['boolean'],
 ```
 
-Update is the same with `sometimes` in place of `required`. Replacing an image deletes the old file.
+Update is the same with `sometimes` in place of `required`, except the two names,
+which are `sometimes|required`: a partial edit need not resend both languages, but
+neither may be sent blank.
 
-The index always eager-loads the category — the list shows a category name on every row, and without it the endpoint runs an N+1.
+`images` on create or update is **the whole set**. Sending it on update replaces
+every existing image, deleting the files it replaces; sending nothing leaves the
+collection alone, which is what an ordinary field edit wants. Adding to a set
+without replacing it is what the image endpoints below are for.
+
+The index always eager-loads the category and the media — the list shows a category name and a thumbnail on every row, and without them the endpoint runs two N+1s.
+
+#### Images
+
+A product holds **up to eight images**, ordered, exactly one of them primary. The
+primary is what the list and the dashboard show; the details screen shows it large
+above a strip of the rest.
+
+| Method | Endpoint | Permission |
+|---|---|---|
+| GET | `/api/products/{id}/images` | `products.update` |
+| POST | `/api/products/{id}/images` | `products.update` |
+| PATCH | `/api/products/{id}/images/reorder` | `products.update` |
+| PATCH | `/api/products/{id}/images/{mediaId}/primary` | `products.update` |
+| DELETE | `/api/products/{id}/images/{mediaId}` | `products.update` |
+
+All five are gated by `products.update`, the read included: the gallery is part of
+the edit screen, not the catalogue. `reorder` is declared before `{mediaId}` in the
+routes file so the wildcard cannot swallow the literal segment — the same reason
+`categories/options` is declared before `categories/{id}`.
+
+Every write answers with the collection as it now stands, so the gallery redraws
+from the response rather than firing a second request:
+
+```json
+{
+  "data": [
+    { "id": 1, "url": "http://.../storage/1/front.png",
+      "thumb_url": "http://.../storage/1/conversions/front-thumb.jpg",
+      "is_primary": true, "order": 1 },
+    { "id": 2, "url": "...", "thumb_url": "...", "is_primary": false, "order": 2 }
+  ]
+}
+```
+
+`POST` takes `images[]` as multipart, one or more files, each `png/jpg/jpeg` and at
+most 2 MB. `PATCH .../reorder` takes `{ "media_ids": [3, 1, 2] }`.
+
+**Rules, enforced in `ProductService`:**
+
+- A product must keep at least one image. Deleting the last one is refused (`422`);
+  deleting the primary while others remain promotes the next in order instead.
+- A product cannot hold more than eight images. The count is checked before
+  anything is written, so an oversized batch stores none of its files rather than
+  the first few (`422`).
+- Every media id sent must belong to the product in the URL. Without that check a
+  reorder could silently reshuffle another product's gallery, because
+  `setNewOrder()` writes by id and does not look at ownership (`422`).
+
+The primary marker is a custom property on the media row, not a column. Custom
+properties are JSON, so no unique constraint is available there — `setPrimary()`
+clearing the flag on every other row is what keeps it to one.
 
 ---
 
@@ -671,13 +938,31 @@ The index always eager-loads the category — the list shows a category name on 
 | DELETE | `/api/categories/{id}` | `categories.delete` |
 | GET | `/api/categories/options` | `categories.view\|products.create\|products.update` |
 
-`/options` returns a lightweight `id` + `name` list for the category dropdown on the product form. The OR gate exists so that a role holding only product-create rights can still populate that dropdown, without being granted management access to the category screens. Spatie's middleware treats `|` as OR.
+`/options` returns a lightweight `id` + `name` list for the category dropdown on the product form, `name` carrying both languages so the dropdown labels itself in whichever one the SPA is showing. The OR gate exists so that a role holding only product-create rights can still populate that dropdown, without being granted management access to the category screens. Spatie's middleware treats `|` as OR.
 
 No seeded role exercises this today — every role in the table above already holds `categories.view`, so the first branch of the OR always matches. The gate is there to keep the door open for a narrower role later, and removing it would quietly make such a role impossible to add.
 
 **Delete rule:** a category holding products cannot be deleted. The Service checks the count and returns `422` with a clear message. This is a business rule, so it lives in `CategoryService`, not the controller.
 
-Validation: `name` required, max 255, unique (ignoring the current row on update); `description` nullable.
+`name` and `description` carry both languages, exactly as on a product:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name":        { "en": "Laptops", "ar": "أجهزة لابتوب" },
+    "description": { "en": "Notebooks and ultrabooks ...", "ar": "أجهزة لابتوب ونوت بوك ..." },
+    "products_count": 6
+  }
+}
+```
+
+`/options` omits `description` — the query never selects it, and the Resource keys
+its presence check on `description_en`.
+
+Validation: `name_en` and `name_ar` both required, max 255, and each unique in its
+own column (ignoring the current row on update); both descriptions nullable. On
+update the two names are `sometimes|required`.
 
 ---
 
@@ -759,24 +1044,79 @@ Validation: `name` required and unique; `description` nullable, max 255; `permis
 
 ## Setup
 
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
+The install steps live at the top of this file, under
+[First-time setup](#first-time-setup). What follows is what the seeders put in
+the database and how Sanctum is wired.
 
-# set DB_* in .env, then:
-php artisan migrate --seed
-php artisan storage:link
-php artisan serve
-```
+### Seeders
 
-The seeder creates the sixteen permissions, the five roles, and one super admin:
+Two, registered in that order and independent of each other. Both are
+idempotent, so either can be re-run on a populated database.
+
+`RoleAndPermissionSeeder` is the one production needs. It creates the sixteen
+permissions, the five roles, and one super admin:
 
 ```
 admin@example.com / password
 ```
 
 Change it before anything leaves your machine.
+
+`DemoDataSeeder` is development data only — five more accounts, five
+categories, and twenty-five products. Run it alone with:
+
+```bash
+php artisan db:seed --class=DemoDataSeeder
+```
+
+It assumes the roles already exist, so run `RoleAndPermissionSeeder` first on a
+fresh database. It never touches the permissions, the roles, or the super admin.
+
+#### Demo accounts
+
+Every one of them uses the password `password`.
+
+| Email | Name | Role | Status |
+|---|---|---|---|
+| `admin@example.com` | Admin User | `super-admin` | active |
+| `manager@example.com` | Nour Hassan | `product-manager` | active |
+| `editor@example.com` | Omar Fathy | `product-editor` | active |
+| `inventory@example.com` | Salma Adel | `inventory-staff` | active |
+| `viewer@example.com` | Youssef Kamal | `viewer` | active |
+| `deactivated@example.com` | Mariam Sobhy | `product-manager` | **deactivated** |
+
+`deactivated@example.com` holds a full `product-manager` permission set on
+purpose. Logging in with it returns the 403 from `EnsureUserIsActive`, which
+shows the block is the account status and not a missing permission.
+
+#### Demo catalogue
+
+Twenty-five products over Laptops, Mobile Phones, Audio, Home Appliances, and
+Accessories, priced in EGP. Four are inactive and four are out of stock, with
+one product in both sets, so the `status` filter, the stock filter, and the two
+combined each return a non-empty page.
+
+The first eight products carry real photographs, committed under
+`database/seeders/images/` and named `{position}-{n}.jpg` — the product's 1-based
+position in the seeder's array, zero-padded, then the image's position within that
+product. `01-1.jpg` is the first product's primary; `01-2.jpg` onwards are its
+extras, in order. Twenty-three files over eight products, between two and four
+each.
+
+The remaining seventeen products have **no images on purpose**. Both the list and
+the details screen need their no-image state exercised, and a catalogue where every
+row has a picture hides the placeholder path entirely.
+
+A product whose position matches no files is skipped silently, and a product that
+already holds images is left alone, so a re-run adds no duplicates and never
+displaces a real image uploaded through the panel. Upload more through the Products
+screen.
+
+Every category and product carries a real Arabic name and description, not a
+copy of the English one, so the bilingual search filter has something to match
+on. The seeder keys on `name_en` and rewrites the other three translated columns
+on every run, so correcting a translation there reaches an existing database —
+price, stock and status are left alone once a row exists.
 
 ### Sanctum SPA configuration
 
@@ -845,6 +1185,38 @@ explicitly on write:
 ```php
 $data['guard_name'] ??= config('permissions.guard');
 ```
+
+### Product images use Spatie Media Library
+
+Its methods live on the `Product` model — `$product->addMedia(...)`,
+`getMedia()`, `Media::setNewOrder()` — so `ProductService` reaches into a model
+directly, and the data migration that moved the old `image_path` values does the
+same. **This is a deliberate exception to the layer rules, not drift.**
+
+Media Library offers no repository seam: there is no query to wrap, because the
+package's own model *is* the API. Routing it through `ProductRepository` would
+mean writing a pass-through method per call that adds a layer and hides nothing.
+The rule it bends — the repository is the only place Eloquent is touched — exists
+to keep queries findable, and `getMedia()` is not a query anyone needs to find.
+
+**Do not try to route it through `ProductRepository`.** The image logic itself —
+the eight-image ceiling, the single primary, promoting the next image when the
+primary goes, checking that a media id belongs to this product — all stays in
+`ProductService`, where every other business rule lives.
+
+Two package details worth knowing before touching this:
+
+**The published `create_media_table` migration has no `down()`.** We added one.
+Without it a rollback leaves the table standing and the next `migrate` dies on
+`Table 'media' already exists`.
+
+**`order_column` is not reliably assigned.** Media Library sets it from a
+`creating` observer, which does not fire for media added while seeding under
+`migrate:fresh --seed` — the rows come out with a null order even though the
+observer is registered and its listener is present. `ProductService::addImages()`,
+the seeder and the data migration therefore all call `->setOrder()` explicitly.
+`setNewOrder()` would only ever repair the rows it is handed, so the order is set
+on the way in rather than patched afterwards.
 
 ### `AuthService` does not use a repository
 
