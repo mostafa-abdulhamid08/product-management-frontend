@@ -144,7 +144,9 @@
     "imageDeleted": "تم حذف الصورة.",
     "primarySet": "تم تحديث الصورة الرئيسية.",
     "imagesReordered": "تم تحديث ترتيب الصور.",
-    "imageActionFailed": "تم رفض هذا التغيير على الصور."
+    "imageActionFailed": "تم رفض هذا التغيير على الصور.",
+    "previousImage": "الصورة السابقة",
+    "nextImage": "الصورة التالية"
   },
   "categories": {
     "title": "الفئات",

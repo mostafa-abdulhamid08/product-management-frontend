@@ -144,7 +144,9 @@
     "imageDeleted": "Image deleted.",
     "primarySet": "Primary image updated.",
     "imagesReordered": "Image order updated.",
-    "imageActionFailed": "That change to the images was refused."
+    "imageActionFailed": "That change to the images was refused.",
+    "previousImage": "Previous image",
+    "nextImage": "Next image"
   },
   "categories": {
     "title": "Categories",

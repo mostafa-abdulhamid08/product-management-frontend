@@ -66,6 +66,29 @@ export class ProductDetailsComponent implements OnInit {
       this.images().find((image) => image.id === selected) ?? this.primaryImage()
     );
   });
+
+  readonly activeIndex = computed(() => {
+    const active = this.activeImage();
+
+    return active ? this.images().findIndex((image) => image.id === active.id) : -1;
+  });
+
+  /**
+   * `delta` is -1 for the previous image and 1 for the next. It wraps, so neither
+   * arrow ever dead-ends — a gallery of four should not need a disabled state at
+   * each end to page around.
+   */
+  step(delta: number): void {
+    const images = this.images();
+
+    if (images.length < 2) {
+      return;
+    }
+
+    const next = (this.activeIndex() + delta + images.length) % images.length;
+
+    this.selectedImageId.set(images[next].id);
+  }
   readonly loading = signal(true);
   readonly missing = signal(false);
   readonly failed = signal(false);

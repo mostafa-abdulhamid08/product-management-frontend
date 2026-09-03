@@ -47,13 +47,57 @@
   </app-page-header>
 
   <div class="flex flex-wrap gap-8 rounded-md border border-border bg-surface p-6">
-    <div class="w-64 shrink-0">
+    <div class="w-full shrink-0 sm:w-80 lg:w-96">
       @if (activeImage(); as image) {
-        <img
-          [src]="image.url"
-          [alt]="item.name | tx"
-          class="aspect-square w-full rounded-md border border-border object-cover"
-        />
+        <div class="relative">
+          <img
+            [src]="image.url"
+            [alt]="item.name | tx"
+            class="aspect-square w-full rounded-md border border-border bg-surface object-contain"
+          />
+
+          @if (images().length > 1) {
+            <button
+              type="button"
+              class="carousel-arrow start-2"
+              [attr.aria-label]="'products.previousImage' | t"
+              (click)="step(-1)"
+            >
+              <svg
+                class="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              class="carousel-arrow end-2"
+              [attr.aria-label]="'products.nextImage' | t"
+              (click)="step(1)"
+            >
+              <svg
+                class="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          }
+        </div>
 
         @if (images().length > 1) {
           <ul class="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
@@ -67,7 +111,7 @@
                   [attr.aria-label]="'products.showImage' | t: { position: thumb.order }"
                   (click)="selectedImageId.set(thumb.id)"
                 >
-                  <img [src]="thumb.thumb_url" alt="" class="size-full object-cover" />
+                  <img [src]="thumb.thumb_url" alt="" class="size-full object-contain" />
                 </button>
               </li>
             }
@@ -82,7 +126,7 @@
       }
     </div>
 
-    <dl class="m-0 grid min-w-72 flex-1 grid-cols-[auto_1fr] items-start gap-x-8 gap-y-3">
+    <dl class="m-0 grid min-w-72 flex-1 auto-rows-min grid-cols-[auto_1fr] content-start items-start gap-x-8 gap-y-3">
       <dt class="text-body font-medium text-text-secondary">{{ 'products.category' | t }}</dt>
       <dd class="m-0 text-body text-text">{{ item.category.name | tx }}</dd>
 

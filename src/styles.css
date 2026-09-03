@@ -135,7 +135,7 @@ body {
   }
 
   .thumb {
-    @apply block size-14 cursor-pointer overflow-hidden rounded-sm border border-border bg-surface p-0 transition-colors;
+    @apply block size-16 cursor-pointer overflow-hidden rounded-sm border border-border bg-surface p-0 transition-colors;
     @apply hover:border-text-muted active:opacity-80;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
     @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border;
@@ -143,6 +143,23 @@ body {
 
   .thumb.is-current {
     @apply border-primary ring-1 ring-primary;
+  }
+
+  /* Sits on top of the image it pages through, so it carries its own surface
+     rather than borrowing the photo's. `start`/`end` and the mirrored glyph keep
+     "previous" on the side the reader starts from in either direction. */
+  .carousel-arrow {
+    @apply absolute top-1/2 inline-flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-primary transition-colors;
+    @apply hover:border-text-muted hover:bg-bg active:opacity-80;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  /* The glyph turns with the layout. `start`/`end` already move the buttons, but a
+     "previous" arrow at the right edge of an RTL page has to point right as well.
+     Written out rather than as an `rtl:` utility because the variant emits no
+     transform here. */
+  [dir='rtl'] .carousel-arrow svg {
+    transform: scaleX(-1);
   }
 
   .sr-only {
