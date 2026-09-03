@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -10,7 +11,12 @@ import { LocaleService } from '../../../../core/services/locale.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { CategoryOption, MAX_PRODUCT_IMAGES, Product } from '../../models/product.model';
+import {
+  CategoryOption,
+  MAX_PRODUCT_IMAGES,
+  Product,
+  ProductImage,
+} from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -65,8 +71,20 @@ export class ProductFormComponent implements OnInit, OnDestroy {
   readonly formError = signal<string | null>(null);
 
   readonly maxImages = MAX_PRODUCT_IMAGES;
+
+  /** Create only: files chosen but not yet uploaded. They go with the first save. */
   readonly pickedImages = signal<PickedImage[]>([]);
   readonly imageError = signal<string | null>(null);
+
+  /**
+   * Edit only: the product's real gallery. Every change here is its own request
+   * that lands before the form is saved, because the images are not form fields —
+   * an upload cannot wait for a Save the user may never press.
+   */
+  readonly gallery = signal<ProductImage[]>([]);
+  readonly galleryBusy = signal(false);
+
+  readonly galleryRoom = computed(() => this.maxImages - this.gallery().length);
 
   /**
    * Edit mode is decided by a usable numeric id, never by the input merely
@@ -121,6 +139,103 @@ export class ProductFormComponent implements OnInit, OnDestroy {
       stock: product.stock,
       category_id: String(product.category_id),
       is_active: product.is_active,
+    });
+
+    this.gallery.set(product.images ?? []);
+  }
+
+  addToGallery(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const chosen = Array.from(input.files ?? []);
+
+    input.value = '';
+
+    if (chosen.length === 0) {
+      return;
+    }
+
+    if (chosen.length > this.galleryRoom()) {
+      this.toast.show(
+        'error',
+        this.locale.translate('products.tooManyImages', { max: this.maxImages }),
+      );
+
+      return;
+    }
+
+    const rejection = chosen.map((file) => this.reject(file)).find((key) => key !== null);
+
+    if (rejection) {
+      this.toast.show('error', this.locale.translate(rejection));
+
+      return;
+    }
+
+    this.runOnGallery(
+      this.products.addImages(this.productId()!, chosen),
+      'products.imagesAdded',
+    );
+  }
+
+  deleteFromGallery(image: ProductImage): void {
+    this.runOnGallery(
+      this.products.deleteImage(this.productId()!, image.id),
+      'products.imageDeleted',
+    );
+  }
+
+  makePrimary(image: ProductImage): void {
+    this.runOnGallery(
+      this.products.setPrimaryImage(this.productId()!, image.id),
+      'products.primarySet',
+    );
+  }
+
+  /** `delta` is -1 for earlier and 1 for later. The whole order is sent back. */
+  moveImage(index: number, delta: number): void {
+    const order = this.gallery().map((image) => image.id);
+    const target = index + delta;
+
+    if (target < 0 || target >= order.length) {
+      return;
+    }
+
+    [order[index], order[target]] = [order[target], order[index]];
+
+    this.runOnGallery(
+      this.products.reorderImages(this.productId()!, order),
+      'products.imagesReordered',
+    );
+  }
+
+  /**
+   * One in flight at a time, and the response is the new gallery — the API sends
+   * the whole collection back after every write, so nothing needs refetching.
+   *
+   * A refusal here is one of the two business rules: no ninth image, and a product
+   * must keep at least one. The API has already worded and translated both, so show
+   * what it said. The fallback covers a body that could not be read at all.
+   */
+  private runOnGallery(request: Observable<ProductImage[]>, successKey: string): void {
+    if (this.galleryBusy()) {
+      return;
+    }
+
+    this.galleryBusy.set(true);
+
+    request.subscribe({
+      next: (images) => {
+        this.gallery.set(images);
+        this.galleryBusy.set(false);
+        this.toast.show('success', this.locale.translate(successKey));
+      },
+      error: (error: HttpErrorResponse) => {
+        this.galleryBusy.set(false);
+        this.toast.show(
+          'error',
+          error.error?.message ?? this.locale.translate('products.imageActionFailed'),
+        );
+      },
     });
   }
 

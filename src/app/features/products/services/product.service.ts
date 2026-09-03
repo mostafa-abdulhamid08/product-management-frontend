@@ -3,7 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 
 import { ApiResponse, Paginated } from '../../../core/models/api-response.model';
-import { CategoryOption, Product, ProductFilters } from '../models/product.model';
+import {
+  CategoryOption,
+  Product,
+  ProductFilters,
+  ProductImage,
+} from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -53,6 +58,56 @@ export class ProductService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`/api/products/${id}`);
+  }
+
+  /**
+   * The gallery endpoints. All five are gated by `products.update` — the read
+   * included, because the gallery is part of the edit screen and not part of the
+   * catalogue — and every one of them answers with the collection as it now
+   * stands, so the screen redraws from the response instead of refetching.
+   */
+  getImages(productId: number): Observable<ProductImage[]> {
+    return this.http
+      .get<ApiResponse<ProductImage[]>>(this.imagesUrl(productId))
+      .pipe(map((response) => response.data));
+  }
+
+  addImages(productId: number, files: File[]): Observable<ProductImage[]> {
+    const data = new FormData();
+
+    files.forEach((file) => data.append('images[]', file));
+
+    return this.http
+      .post<ApiResponse<ProductImage[]>>(this.imagesUrl(productId), data)
+      .pipe(map((response) => response.data));
+  }
+
+  deleteImage(productId: number, mediaId: number): Observable<ProductImage[]> {
+    return this.http
+      .delete<ApiResponse<ProductImage[]>>(`${this.imagesUrl(productId)}/${mediaId}`)
+      .pipe(map((response) => response.data));
+  }
+
+  setPrimaryImage(productId: number, mediaId: number): Observable<ProductImage[]> {
+    return this.http
+      .patch<ApiResponse<ProductImage[]>>(
+        `${this.imagesUrl(productId)}/${mediaId}/primary`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  /** The body key is `media_ids`, and the order of the array is the new order. */
+  reorderImages(productId: number, mediaIds: number[]): Observable<ProductImage[]> {
+    return this.http
+      .patch<ApiResponse<ProductImage[]>>(`${this.imagesUrl(productId)}/reorder`, {
+        media_ids: mediaIds,
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  private imagesUrl(productId: number): string {
+    return `/api/products/${productId}/images`;
   }
 
   /**

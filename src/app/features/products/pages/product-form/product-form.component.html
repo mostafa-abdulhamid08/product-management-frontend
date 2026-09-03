@@ -169,76 +169,196 @@
           <div class="mb-3 flex items-baseline justify-between gap-3">
             <p class="m-0 text-body font-medium text-text">{{ 'products.images' | t }}</p>
             <span class="ratio text-meta text-text-muted">
-              {{ pickedImages().length }} / {{ maxImages }}
+              {{ isEdit() ? gallery().length : pickedImages().length }} / {{ maxImages }}
             </span>
           </div>
 
-          @if (pickedImages().length > 0) {
-            <ul class="m-0 mb-3 grid list-none grid-cols-2 gap-2 p-0">
-              @for (picked of pickedImages(); track picked.url; let index = $index) {
-                <li class="relative">
-                  <img
-                    [src]="picked.url"
-                    alt=""
-                    class="aspect-square w-full rounded-sm border border-border object-cover"
-                  />
+          @if (isEdit()) {
+            @if (gallery().length > 0) {
+              <ul class="m-0 mb-3 flex list-none flex-col gap-2 p-0" [attr.aria-busy]="galleryBusy()">
+                @for (image of gallery(); track image.id; let index = $index, first = $first, last = $last) {
+                  <li class="flex items-center gap-2 rounded-sm border border-border p-2">
+                    <img
+                      [src]="image.thumb_url"
+                      alt=""
+                      class="size-12 shrink-0 rounded-sm border border-border object-cover"
+                    />
 
-                  @if (index === 0) {
-                    <span
-                      class="absolute start-1 top-1 rounded-sm bg-primary px-1.5 text-meta text-surface"
-                    >
-                      {{ 'products.primaryBadge' | t }}
-                    </span>
-                  }
+                    <div class="min-w-0 flex-1">
+                      @if (image.is_primary) {
+                        <span class="rounded-sm bg-primary-subtle px-1.5 text-meta text-primary">
+                          {{ 'products.primaryBadge' | t }}
+                        </span>
+                      } @else {
+                        <button
+                          type="button"
+                          class="rounded-sm text-meta text-primary underline-offset-2 hover:underline active:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-text-muted disabled:no-underline disabled:hover:no-underline"
+                          [disabled]="galleryBusy()"
+                          (click)="makePrimary(image)"
+                        >
+                          {{ 'products.makePrimary' | t }}
+                        </button>
+                      }
+                    </div>
 
-                  <button
-                    type="button"
-                    class="icon-btn icon-btn-danger absolute end-1 top-1 bg-surface"
-                    [attr.aria-label]="'products.removeImageAt' | t: { position: index + 1 }"
-                    (click)="removePicked(index)"
-                  >
-                    <svg
-                      class="size-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M18 6 6 18" />
-                      <path d="m6 6 12 12" />
-                    </svg>
-                  </button>
-                </li>
-              }
-            </ul>
-          } @else {
-            <div
-              class="mb-3 flex aspect-square w-full items-center justify-center rounded-md border border-dashed border-border bg-bg text-body text-text-muted"
-            >
-              {{ 'products.noImage' | t }}
-            </div>
-          }
+                    <div class="flex shrink-0 items-center">
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        [disabled]="first || galleryBusy()"
+                        [attr.aria-label]="'products.moveImageUp' | t: { position: index + 1 }"
+                        (click)="moveImage(index, -1)"
+                      >
+                      <svg
+                        class="size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="m18 15-6-6-6 6" />
+                        </svg>
+                      </button>
 
-          <input
-            type="file"
-            multiple
-            accept="image/png,image/jpeg"
-            class="field h-auto py-1.5 file:me-3 file:rounded-sm file:border-0 file:bg-bg file:px-3 file:py-1 file:text-body file:text-text-secondary"
-            [attr.aria-label]="'products.imagesLabel' | t"
-            [class.field-invalid]="imageError()"
-            [disabled]="pickedImages().length >= maxImages"
-            (change)="onImages($event)"
-          />
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        [disabled]="last || galleryBusy()"
+                        [attr.aria-label]="'products.moveImageDown' | t: { position: index + 1 }"
+                        (click)="moveImage(index, 1)"
+                      >
+                      <svg
+                        class="size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
 
-          @if (imageError(); as message) {
-            <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
-          } @else {
+                      <button
+                        type="button"
+                        class="icon-btn icon-btn-danger"
+                        [disabled]="galleryBusy()"
+                        [attr.aria-label]="'products.deleteImageAt' | t: { position: index + 1 }"
+                        (click)="deleteFromGallery(image)"
+                      >
+                      <svg
+                        class="size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4h8v2" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        </svg>
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div
+                class="mb-3 flex aspect-square w-full items-center justify-center rounded-md border border-dashed border-border bg-bg text-body text-text-muted"
+              >
+                {{ 'products.noImage' | t }}
+              </div>
+            }
+
+            <input
+              type="file"
+              multiple
+              accept="image/png,image/jpeg"
+              class="field h-auto py-1.5 file:me-3 file:rounded-sm file:border-0 file:bg-bg file:px-3 file:py-1 file:text-body file:text-text-secondary"
+              [attr.aria-label]="'products.addImages' | t"
+              [disabled]="galleryBusy() || galleryRoom() <= 0"
+              (change)="addToGallery($event)"
+            />
+
             <p class="mt-1.5 text-meta text-text-muted">
-              {{ 'products.imagesHint' | t: { max: maxImages } }}
+              {{ 'products.imagesRemaining' | t: { count: galleryRoom() } }}
             </p>
+          } @else {
+            @if (pickedImages().length > 0) {
+              <ul class="m-0 mb-3 grid list-none grid-cols-2 gap-2 p-0">
+                @for (picked of pickedImages(); track picked.url; let index = $index) {
+                  <li class="relative">
+                    <img
+                      [src]="picked.url"
+                      alt=""
+                      class="aspect-square w-full rounded-sm border border-border object-cover"
+                    />
+
+                    @if (index === 0) {
+                      <span
+                        class="absolute start-1 top-1 rounded-sm bg-primary px-1.5 text-meta text-surface"
+                      >
+                        {{ 'products.primaryBadge' | t }}
+                      </span>
+                    }
+
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn-danger absolute end-1 top-1 bg-surface"
+                      [attr.aria-label]="'products.removeImageAt' | t: { position: index + 1 }"
+                      (click)="removePicked(index)"
+                    >
+                      <svg
+                        class="size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                      </svg>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div
+                class="mb-3 flex aspect-square w-full items-center justify-center rounded-md border border-dashed border-border bg-bg text-body text-text-muted"
+              >
+                {{ 'products.noImage' | t }}
+              </div>
+            }
+
+            <input
+              type="file"
+              multiple
+              accept="image/png,image/jpeg"
+              class="field h-auto py-1.5 file:me-3 file:rounded-sm file:border-0 file:bg-bg file:px-3 file:py-1 file:text-body file:text-text-secondary"
+              [attr.aria-label]="'products.imagesLabel' | t"
+              [class.field-invalid]="imageError()"
+              [disabled]="pickedImages().length >= maxImages"
+              (change)="onImages($event)"
+            />
+
+            @if (imageError(); as message) {
+              <p class="mt-1.5 text-meta text-danger">{{ message }}</p>
+            } @else {
+              <p class="mt-1.5 text-meta text-text-muted">
+                {{ 'products.imagesHint' | t: { max: maxImages } }}
+              </p>
+            }
           }
         </div>
       </div>

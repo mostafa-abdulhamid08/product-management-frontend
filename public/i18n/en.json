@@ -133,7 +133,18 @@
     "imagesHint": "PNG or JPG, up to 2 MB each. Up to {max} images.",
     "primaryBadge": "Primary",
     "removeImageAt": "Remove image {position}",
-    "tooManyImages": "A product can hold at most {max} images."
+    "tooManyImages": "A product can hold at most {max} images.",
+    "addImages": "Add images",
+    "makePrimary": "Make primary",
+    "moveImageUp": "Move image {position} earlier",
+    "moveImageDown": "Move image {position} later",
+    "deleteImageAt": "Delete image {position}",
+    "imagesRemaining": "You can add {count} more.",
+    "imagesAdded": "Images added.",
+    "imageDeleted": "Image deleted.",
+    "primarySet": "Primary image updated.",
+    "imagesReordered": "Image order updated.",
+    "imageActionFailed": "That change to the images was refused."
   },
   "categories": {
     "title": "Categories",

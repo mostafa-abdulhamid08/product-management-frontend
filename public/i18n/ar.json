@@ -133,7 +133,18 @@
     "imagesHint": "PNG أو JPG، حتى 2 ميجابايت للصورة. حتى {max} صور.",
     "primaryBadge": "الرئيسية",
     "removeImageAt": "إزالة الصورة {position}",
-    "tooManyImages": "لا يمكن أن يحتوي المنتج على أكثر من {max} صور."
+    "tooManyImages": "لا يمكن أن يحتوي المنتج على أكثر من {max} صور.",
+    "addImages": "إضافة صور",
+    "makePrimary": "اجعلها الرئيسية",
+    "moveImageUp": "تقديم الصورة {position}",
+    "moveImageDown": "تأخير الصورة {position}",
+    "deleteImageAt": "حذف الصورة {position}",
+    "imagesRemaining": "يمكنك إضافة {count} صور أخرى.",
+    "imagesAdded": "تمت إضافة الصور.",
+    "imageDeleted": "تم حذف الصورة.",
+    "primarySet": "تم تحديث الصورة الرئيسية.",
+    "imagesReordered": "تم تحديث ترتيب الصور.",
+    "imageActionFailed": "تم رفض هذا التغيير على الصور."
   },
   "categories": {
     "title": "الفئات",
